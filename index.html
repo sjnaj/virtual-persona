@@ -1,0 +1,2099 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>虚拟人格系统 — 架构图 & 使用手册</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0f;
+  --surface: #12121a;
+  --surface2: #1a1a28;
+  --surface3: #222235;
+  --border: #2a2a42;
+  --text: #e0e0f0;
+  --text2: #9090b0;
+  --accent: #7c5cfc;
+  --accent2: #c05cfc;
+  --accent3: #5c8cfc;
+  --pink: #fc5c8c;
+  --green: #5cfc8c;
+  --yellow: #fcd05c;
+  --orange: #fc8c5c;
+  --cyan: #5cfcf0;
+  --red: #fc5c5c;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family:'Noto Sans SC',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  line-height:1.7;
+  overflow-x:hidden;
+}
+::selection { background:var(--accent); color:#fff; }
+::-webkit-scrollbar { width:6px; }
+::-webkit-scrollbar-track { background:var(--bg); }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
+/* Header */
+.hero {
+  text-align:center;
+  padding:60px 20px 40px;
+  position:relative;
+  overflow:hidden;
+}
+.hero::before {
+  content:'';
+  position:absolute;
+  top:-50%;left:-50%;
+  width:200%;height:200%;
+  background:radial-gradient(ellipse at 50% 50%, rgba(124,92,252,0.08) 0%, transparent 60%);
+  animation:heroPulse 8s ease-in-out infinite;
+}
+@keyframes heroPulse {
+  0%,100%{transform:scale(1);opacity:0.6}
+  50%{transform:scale(1.1);opacity:1}
+}
+.hero h1 {
+  font-size:clamp(28px,5vw,52px);
+  font-weight:900;
+  background:linear-gradient(135deg,var(--accent),var(--pink),var(--accent3));
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  position:relative;
+}
+.hero .sub {
+  color:var(--text2);
+  font-size:clamp(14px,2.5vw,18px);
+  margin-top:12px;
+  position:relative;
+}
+.version-badge {
+  display:inline-block;
+  background:var(--surface2);
+  border:1px solid var(--border);
+  padding:4px 14px;
+  border-radius:20px;
+  font-size:12px;
+  color:var(--accent);
+  margin-top:16px;
+  position:relative;
+  font-family:'JetBrains Mono',monospace;
+}
+
+/* Nav */
+nav {
+  position:sticky;
+  top:0;
+  z-index:100;
+  background:rgba(10,10,15,0.85);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  padding:0 20px;
+  overflow-x:auto;
+  white-space:nowrap;
+}
+nav .inner {
+  max-width:1200px;
+  margin:0 auto;
+  display:flex;
+  gap:4px;
+  padding:8px 0;
+}
+nav a {
+  color:var(--text2);
+  text-decoration:none;
+  padding:8px 16px;
+  border-radius:8px;
+  font-size:13px;
+  font-weight:500;
+  transition:all 0.2s;
+  flex-shrink:0;
+}
+nav a:hover, nav a.active {
+  color:var(--accent);
+  background:rgba(124,92,252,0.1);
+}
+
+/* Main */
+.container {
+  max-width:1200px;
+  margin:0 auto;
+  padding:0 20px 80px;
+}
+section {
+  margin-top:60px;
+}
+section h2 {
+  font-size:clamp(22px,3.5vw,32px);
+  font-weight:700;
+  margin-bottom:8px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+section h2 .icon {
+  font-size:28px;
+}
+section .section-desc {
+  color:var(--text2);
+  margin-bottom:32px;
+  font-size:15px;
+  max-width:700px;
+}
+h3 {
+  font-size:18px;
+  font-weight:600;
+  margin:28px 0 12px;
+  color:var(--text);
+}
+
+/* Architecture SVG Container */
+.arch-container {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:32px 20px;
+  overflow-x:auto;
+  position:relative;
+}
+.arch-svg {
+  width:100%;
+  min-width:900px;
+  height:auto;
+}
+.arch-svg text {
+  font-family:'Noto Sans SC',sans-serif;
+  fill:var(--text);
+}
+.arch-svg .label {
+  font-size:11px;
+  fill:var(--text2);
+}
+.arch-svg .module-title {
+  font-size:13px;
+  font-weight:700;
+}
+.arch-svg .zone-label {
+  font-size:10px;
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:1.5px;
+}
+
+/* Cards */
+.card-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(280px,1fr));
+  gap:16px;
+}
+.card {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:24px;
+  transition:all 0.3s;
+  position:relative;
+  overflow:hidden;
+}
+.card:hover {
+  border-color:var(--accent);
+  transform:translateY(-2px);
+  box-shadow:0 8px 30px rgba(124,92,252,0.1);
+}
+.card::before {
+  content:'';
+  position:absolute;
+  top:0;left:0;right:0;
+  height:3px;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  opacity:0;
+  transition:opacity 0.3s;
+}
+.card:hover::before { opacity:1; }
+.card .card-icon {
+  font-size:32px;
+  margin-bottom:12px;
+}
+.card h4 {
+  font-size:16px;
+  font-weight:700;
+  margin-bottom:6px;
+}
+.card p {
+  color:var(--text2);
+  font-size:13px;
+  line-height:1.6;
+}
+.card .tag {
+  display:inline-block;
+  background:var(--surface3);
+  color:var(--accent);
+  padding:2px 10px;
+  border-radius:10px;
+  font-size:11px;
+  margin-top:10px;
+  font-family:'JetBrains Mono',monospace;
+}
+
+/* Data Flow */
+.flow-container {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:32px 20px;
+  overflow-x:auto;
+}
+
+/* Timeline */
+.timeline {
+  position:relative;
+  padding-left:32px;
+}
+.timeline::before {
+  content:'';
+  position:absolute;
+  left:11px;top:0;bottom:0;
+  width:2px;
+  background:linear-gradient(to bottom,var(--accent),var(--pink),var(--accent3));
+}
+.timeline-item {
+  position:relative;
+  margin-bottom:28px;
+  padding:16px 20px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+}
+.timeline-item::before {
+  content:'';
+  position:absolute;
+  left:-27px;top:20px;
+  width:12px;height:12px;
+  border-radius:50%;
+  background:var(--accent);
+  border:3px solid var(--bg);
+}
+.timeline-item h4 {
+  font-size:14px;
+  font-weight:600;
+  margin-bottom:4px;
+}
+.timeline-item p {
+  color:var(--text2);
+  font-size:13px;
+}
+.timeline-item .meta {
+  color:var(--accent);
+  font-size:11px;
+  font-family:'JetBrains Mono',monospace;
+  margin-bottom:4px;
+}
+
+/* Command Table */
+.cmd-table {
+  width:100%;
+  border-collapse:collapse;
+  font-size:13px;
+}
+.cmd-table th {
+  text-align:left;
+  padding:12px 16px;
+  background:var(--surface2);
+  color:var(--accent);
+  font-weight:600;
+  border-bottom:2px solid var(--border);
+  position:sticky;
+  top:0;
+}
+.cmd-table td {
+  padding:12px 16px;
+  border-bottom:1px solid var(--border);
+  vertical-align:top;
+}
+.cmd-table tr:hover td { background:var(--surface); }
+.cmd-table code {
+  background:var(--surface3);
+  padding:2px 8px;
+  border-radius:4px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;
+  color:var(--cyan);
+  white-space:nowrap;
+}
+.cmd-table .desc { color:var(--text2); }
+
+/* Code block */
+.code-block {
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:16px 20px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;
+  line-height:1.8;
+  overflow-x:auto;
+  color:var(--text);
+  margin:12px 0;
+}
+.code-block .comment { color:#666; }
+.code-block .keyword { color:var(--pink); }
+.code-block .string { color:var(--green); }
+.code-block .number { color:var(--yellow); }
+.code-block .param { color:var(--orange); }
+
+/* Tabs */
+.tabs {
+  display:flex;
+  gap:4px;
+  margin-bottom:20px;
+  flex-wrap:wrap;
+}
+.tab-btn {
+  background:var(--surface);
+  border:1px solid var(--border);
+  color:var(--text2);
+  padding:8px 20px;
+  border-radius:8px;
+  cursor:pointer;
+  font-size:13px;
+  font-family:'Noto Sans SC',sans-serif;
+  transition:all 0.2s;
+}
+.tab-btn:hover { border-color:var(--accent); color:var(--text); }
+.tab-btn.active {
+  background:rgba(124,92,252,0.15);
+  border-color:var(--accent);
+  color:var(--accent);
+}
+.tab-content { display:none; }
+.tab-content.active { display:block; }
+
+/* Scenario Cards */
+.scenario {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:14px;
+  margin-bottom:16px;
+  overflow:hidden;
+}
+.scenario-header {
+  padding:16px 20px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  transition:background 0.2s;
+}
+.scenario-header:hover { background:var(--surface2); }
+.scenario-header .num {
+  background:var(--accent);
+  color:#fff;
+  width:28px;height:28px;
+  border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;
+  flex-shrink:0;
+}
+.scenario-header h4 { font-size:15px; flex:1; }
+.scenario-header .arrow {
+  color:var(--text2);
+  transition:transform 0.3s;
+  font-size:18px;
+}
+.scenario.open .scenario-header .arrow { transform:rotate(180deg); }
+.scenario-body {
+  max-height:0;
+  overflow:hidden;
+  transition:max-height 0.4s ease;
+}
+.scenario.open .scenario-body { max-height:2000px; }
+.scenario-body-inner {
+  padding:0 20px 20px;
+  border-top:1px solid var(--border);
+}
+
+/* Stats Bar */
+.stat-bar {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin:4px 0;
+}
+.stat-bar .bar-label {
+  width:80px;
+  font-size:12px;
+  color:var(--text2);
+  flex-shrink:0;
+}
+.stat-bar .bar-track {
+  flex:1;
+  height:6px;
+  background:var(--surface3);
+  border-radius:3px;
+  overflow:hidden;
+}
+.stat-bar .bar-fill {
+  height:100%;
+  border-radius:3px;
+  transition:width 1s ease;
+}
+.stat-bar .bar-val {
+  width:36px;
+  text-align:right;
+  font-size:11px;
+  color:var(--text2);
+  font-family:'JetBrains Mono',monospace;
+}
+
+/* Relationship Demo */
+.rel-demo {
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(260px,1fr));
+  gap:16px;
+  margin:20px 0;
+}
+.rel-card {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:20px;
+}
+.rel-card .rel-header {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-bottom:14px;
+}
+.rel-card .avatar {
+  width:42px;height:42px;
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;
+  flex-shrink:0;
+}
+.rel-card .rel-name { font-weight:600; font-size:15px; }
+.rel-card .rel-role { font-size:12px; color:var(--text2); }
+.rel-card .rel-quote {
+  font-size:12px;
+  color:var(--text2);
+  font-style:italic;
+  margin-top:12px;
+  padding:10px;
+  background:var(--surface2);
+  border-radius:8px;
+  border-left:3px solid var(--accent);
+}
+
+/* File tree */
+.file-tree {
+  font-family:'JetBrains Mono',monospace;
+  font-size:13px;
+  line-height:2;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:20px;
+}
+.file-tree .dir { color:var(--accent3); }
+.file-tree .file { color:var(--text2); }
+.file-tree .file.main { color:var(--green); }
+.file-tree .desc { color:#555; font-size:11px; }
+
+/* Alert */
+.alert {
+  padding:16px 20px;
+  border-radius:10px;
+  margin:16px 0;
+  font-size:13px;
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+}
+.alert-info {
+  background:rgba(92,140,252,0.1);
+  border:1px solid rgba(92,140,252,0.2);
+  color:var(--accent3);
+}
+.alert-warn {
+  background:rgba(252,208,92,0.08);
+  border:1px solid rgba(252,208,92,0.2);
+  color:var(--yellow);
+}
+.alert-tip {
+  background:rgba(92,252,140,0.08);
+  border:1px solid rgba(92,252,140,0.2);
+  color:var(--green);
+}
+.alert .alert-icon { font-size:18px; flex-shrink:0; }
+
+/* Footer */
+footer {
+  text-align:center;
+  padding:40px 20px;
+  color:var(--text2);
+  font-size:12px;
+  border-top:1px solid var(--border);
+  margin-top:80px;
+}
+
+/* Interactive Architecture */
+.module-info-panel {
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  width:320px;
+  max-height:400px;
+  background:var(--surface);
+  border:1px solid var(--accent);
+  border-radius:14px;
+  padding:20px;
+  z-index:200;
+  display:none;
+  box-shadow:0 10px 40px rgba(0,0,0,0.5);
+  overflow-y:auto;
+}
+.module-info-panel.show { display:block; animation:slideUp 0.3s ease; }
+@keyframes slideUp {
+  from{transform:translateY(20px);opacity:0}
+  to{transform:translateY(0);opacity:1}
+}
+.module-info-panel .close-btn {
+  position:absolute;top:10px;right:14px;
+  background:none;border:none;color:var(--text2);
+  cursor:pointer;font-size:18px;
+}
+.module-info-panel h4 {
+  font-size:16px;
+  margin-bottom:8px;
+  color:var(--accent);
+}
+.module-info-panel p { font-size:13px; color:var(--text2); line-height:1.7; }
+.module-info-panel .connections {
+  margin-top:12px;
+  font-size:12px;
+}
+.module-info-panel .conn-item {
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:3px 0;
+  color:var(--text2);
+}
+.module-info-panel .conn-arrow { color:var(--accent); }
+
+/* Responsive */
+@media(max-width:768px) {
+  .arch-container { padding:16px 8px; }
+  .card-grid { grid-template-columns:1fr; }
+  .rel-demo { grid-template-columns:1fr; }
+  .module-info-panel { width:calc(100% - 40px); right:20px; left:20px; }
+  nav .inner { gap:0; }
+  nav a { padding:8px 12px; font-size:12px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<div class="hero">
+  <h1>虚拟人格系统</h1>
+  <div class="sub">单一个体 · 多重关系 · 跨窗口互动 · 真实社交模拟</div>
+  <div class="version-badge">v2.0 — Multi-Relationship Architecture</div>
+</div>
+
+<!-- Nav -->
+<nav>
+  <div class="inner">
+    <a href="#arch" class="active">架构总览</a>
+    <a href="#modules">模块详解</a>
+    <a href="#dataflow">数据流</a>
+    <a href="#relationship">关系系统</a>
+    <a href="#group">群聊引擎</a>
+    <a href="#privacy">隐私边界</a>
+    <a href="#setup">部署指南</a>
+    <a href="#commands">命令手册</a>
+    <a href="#scenarios">场景手册</a>
+    <a href="#faq">FAQ</a>
+  </div>
+</nav>
+
+<div class="container">
+
+<!-- ============ Section: Architecture ============ -->
+<section id="arch">
+  <h2><span class="icon">🏗️</span> 系统架构总览</h2>
+  <p class="section-desc">她是唯一的个体——一个大脑、一份情绪、一段人生。但她在不同聊天窗口面对不同的人时，会自然地切换语气和边界，就像真人在微信里和不同的人聊天一样。</p>
+
+  <div class="arch-container">
+    <svg class="arch-svg" viewBox="0 0 960 720" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="gAccent" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#7c5cfc"/>
+          <stop offset="100%" stop-color="#c05cfc"/>
+        </linearGradient>
+        <linearGradient id="gPink" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#fc5c8c"/>
+          <stop offset="100%" stop-color="#fc8c5c"/>
+        </linearGradient>
+        <linearGradient id="gBlue" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#5c8cfc"/>
+          <stop offset="100%" stop-color="#5cfcf0"/>
+        </linearGradient>
+        <linearGradient id="gGreen" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#5cfc8c"/>
+          <stop offset="100%" stop-color="#fcd05c"/>
+        </linearGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+          <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <marker id="arrowAccent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#7c5cfc"/>
+        </marker>
+        <marker id="arrowPink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#fc5c8c"/>
+        </marker>
+        <marker id="arrowBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#5c8cfc"/>
+        </marker>
+        <marker id="arrowGray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#555"/>
+        </marker>
+      </defs>
+
+      <!-- ===== Zone: Singleton Core ===== -->
+      <rect x="240" y="30" width="480" height="190" rx="16" fill="none" stroke="#7c5cfc" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.4"/>
+      <text x="260" y="52" class="zone-label" fill="#7c5cfc" font-size="10" font-weight="600" letter-spacing="2">SINGLETON CORE — 唯一自我</text>
+
+      <!-- LifeSimulator -->
+      <rect x="260" y="68" width="130" height="60" rx="10" fill="#1a1a28" stroke="#7c5cfc" stroke-width="1.5" class="mod" data-mod="life"/>
+      <text x="325" y="93" text-anchor="middle" class="module-title" font-size="12" fill="#e0e0f0">🌙 LifeSimulator</text>
+      <text x="325" y="115" text-anchor="middle" class="label" font-size="10">作息 · 位置 · 体力</text>
+
+      <!-- EmotionEngine -->
+      <rect x="415" y="68" width="130" height="60" rx="10" fill="#1a1a28" stroke="#fc5c8c" stroke-width="1.5" class="mod" data-mod="emotion"/>
+      <text x="480" y="93" text-anchor="middle" class="module-title" font-size="12" fill="#e0e0f0">💛 EmotionEngine</text>
+      <text x="480" y="115" text-anchor="middle" class="label" font-size="10">情绪 · 心情 · 依恋</text>
+
+      <!-- BrowserAgent -->
+      <rect x="570" y="68" width="130" height="60" rx="10" fill="#1a1a28" stroke="#5cfcf0" stroke-width="1.5" class="mod" data-mod="browser"/>
+      <text x="635" y="93" text-anchor="middle" class="module-title" font-size="12" fill="#e0e0f0">📱 BrowserAgent</text>
+      <text x="635" y="115" text-anchor="middle" class="label" font-size="10">RSS · 热搜 · 兴趣</text>
+
+      <!-- StickerEngine -->
+      <rect x="260" y="145" width="130" height="55" rx="10" fill="#1a1a28" stroke="#fcd05c" stroke-width="1.5" class="mod" data-mod="sticker"/>
+      <text x="325" y="170" text-anchor="middle" class="module-title" font-size="12" fill="#e0e0f0">😸 StickerEngine</text>
+      <text x="325" y="190" text-anchor="middle" class="label" font-size="10">表情包 · 人格化选择</text>
+
+      <!-- ProactiveEngine -->
+      <rect x="415" y="145" width="130" height="55" rx="10" fill="#1a1a28" stroke="#5cfc8c" stroke-width="1.5" class="mod" data-mod="proactive"/>
+      <text x="480" y="170" text-anchor="middle" class="module-title" font-size="12" fill="#e0e0f0">💬 ProactiveEngine</text>
+      <text x="480" y="190" text-anchor="middle" class="label" font-size="10">主动发消息 · 触发器</text>
+
+      <!-- EventBus -->
+      <rect x="570" y="145" width="130" height="55" rx="10" fill="#1a1a28" stroke="#9090b0" stroke-width="1.5" class="mod" data-mod="eventbus"/>
+      <text x="635" y="170" text-anchor="middle" class="module-title" font-size="12" fill="#e0e0f0">🔌 EventBus</text>
+      <text x="635" y="190" text-anchor="middle" class="label" font-size="10">事件分发中心</text>
+
+      <!-- ===== Zone: Per-User Layer ===== -->
+      <rect x="50" y="250" width="860" height="130" rx="16" fill="none" stroke="#fc5c8c" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.4"/>
+      <text x="70" y="272" class="zone-label" fill="#fc5c8c" font-size="10" font-weight="600" letter-spacing="2">PER-USER LAYER — 每人独立</text>
+
+      <!-- RelationshipManager -->
+      <rect x="70" y="290" width="200" height="70" rx="10" fill="#1a1a28" stroke="#fc5c8c" stroke-width="1.5" class="mod" data-mod="relationship"/>
+      <text x="170" y="318" text-anchor="middle" class="module-title" font-size="12" fill="#e0e0f0">👥 RelationshipManager</text>
+      <text x="170" y="340" text-anchor="middle" class="label" font-size="10">关系档案 · 亲密度 · 印象标签</text>
+
+      <!-- Rel profiles -->
+      <rect x="295" y="288" width="105" height="50" rx="8" fill="#222235" stroke="#fc8c5c" stroke-width="1" class="mod" data-mod="profile-you"/>
+      <text x="348" y="310" text-anchor="middle" font-size="11" fill="#fc8c5c">关系:你</text>
+      <text x="348" y="326" text-anchor="middle" class="label" font-size="9">亲密 0.8 · 暧昧</text>
+
+      <rect x="410" y="288" width="105" height="50" rx="8" fill="#222235" stroke="#5c8cfc" stroke-width="1" class="mod" data-mod="profile-friend"/>
+      <text x="463" y="310" text-anchor="middle" font-size="11" fill="#5c8cfc">关系:同事</text>
+      <text x="463" y="326" text-anchor="middle" class="label" font-size="9">亲密 0.3 · 普通</text>
+
+      <rect x="525" y="288" width="105" height="50" rx="8" fill="#222235" stroke="#5cfcf0" stroke-width="1" class="mod" data-mod="profile-ai"/>
+      <text x="578" y="310" text-anchor="middle" font-size="11" fill="#5cfcf0">关系:AI-B</text>
+      <text x="578" y="326" text-anchor="middle" class="label" font-size="9">亲密 0.5 · 网友</text>
+
+      <rect x="640" y="288" width="105" height="50" rx="8" fill="#222235" stroke="#9090b0" stroke-width="1" class="mod" data-mod="profile-new"/>
+      <text x="693" y="310" text-anchor="middle" font-size="11" fill="#9090b0">关系:陌生人</text>
+      <text x="693" y="326" text-anchor="middle" class="label" font-size="9">亲密 0.1 · 新</text>
+
+      <text x="762" y="318" font-size="18" fill="#555">···</text>
+
+      <!-- Arrows from RelMgr to profiles -->
+      <line x1="270" y1="320" x2="293" y2="315" stroke="#fc5c8c" stroke-width="1" marker-end="url(#arrowPink)"/>
+
+      <!-- ===== Zone: Shared Intelligence ===== -->
+      <rect x="50" y="410" width="860" height="110" rx="16" fill="none" stroke="#5c8cfc" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.4"/>
+      <text x="70" y="432" class="zone-label" fill="#5c8cfc" font-size="10" font-weight="600" letter-spacing="2">SHARED INTELLIGENCE — 共享智能层</text>
+
+      <!-- MemoryHub -->
+      <rect x="70" y="448" width="200" height="55" rx="10" fill="#1a1a28" stroke="#5c8cfc" stroke-width="1.5" class="mod" data-mod="memory"/>
+      <text x="170" y="473" text-anchor="middle" class="module-title" font-size="12" fill="#e0e0f0">🧠 MemoryHub</text>
+      <text x="170" y="493" text-anchor="middle" class="label" font-size="10">情节 · 语义 · 情感 + 隐私标记</text>
+
+      <!-- ChatContextManager -->
+      <rect x="300" y="448" width="200" height="55" rx="10" fill="#1a1a28" stroke="#5c8cfc" stroke-width="1.5" class="mod" data-mod="chatctx"/>
+      <text x="400" y="473" text-anchor="middle" class="module-title" font-size="12" fill="#e0e0f0">💭 ChatContextManager</text>
+      <text x="400" y="493" text-anchor="middle" class="label" font-size="10">每窗口对话流 · 会话状态</text>
+
+      <!-- GroupBehaviorEngine -->
+      <rect x="530" y="448" width="200" height="55" rx="10" fill="#1a1a28" stroke="#5cfc8c" stroke-width="1.5" class="mod" data-mod="groupbeh"/>
+      <text x="630" y="473" text-anchor="middle" class="module-title" font-size="12" fill="#e0e0f0">🎯 GroupBehavior</text>
+      <text x="630" y="493" text-anchor="middle" class="label" font-size="10">群聊决策 · 概率回复 · 潜水</text>
+
+      <!-- ExpressionSynthesizer -->
+      <rect x="760" y="448" width="130" height="55" rx="10" fill="#1a1a28" stroke="url(#gAccent)" stroke-width="2" class="mod" data-mod="expression"/>
+      <text x="825" y="473" text-anchor="middle" class="module-title" font-size="12" fill="#e0e0f0">✍️ Expression</text>
+      <text x="825" y="493" text-anchor="middle" class="label" font-size="10">表达合成 · 人格化输出</text>
+
+      <!-- ===== Zone: Orchestrator ===== -->
+      <rect x="280" y="545" width="400" height="55" rx="12" fill="rgba(124,92,252,0.1)" stroke="url(#gAccent)" stroke-width="2" filter="url(#glow)" class="mod" data-mod="orchestrator"/>
+      <text x="480" y="577" text-anchor="middle" class="module-title" font-size="14" fill="#c0b0ff">🎭 Orchestrator — 中枢协调器</text>
+
+      <!-- ===== Zone: I/O ===== -->
+      <rect x="50" y="630" width="860" height="70" rx="16" fill="none" stroke="#9090b0" stroke-width="1" stroke-dasharray="4 3" opacity="0.3"/>
+      <text x="70" y="652" class="zone-label" fill="#9090b0" font-size="10" font-weight="600" letter-spacing="2">I/O LAYER — 外部接口</text>
+
+      <!-- Chat windows -->
+      <rect x="80" y="660" width="130" height="32" rx="8" fill="#222235" stroke="#fc8c5c" stroke-width="1"/>
+      <text x="145" y="680" text-anchor="middle" font-size="11" fill="#fc8c5c">🔒 私聊：你</text>
+
+      <rect x="225" y="660" width="130" height="32" rx="8" fill="#222235" stroke="#5c8cfc" stroke-width="1"/>
+      <text x="290" y="680" text-anchor="middle" font-size="11" fill="#5c8cfc">🔒 私聊：同事</text>
+
+      <rect x="370" y="660" width="130" height="32" rx="8" fill="#222235" stroke="#5cfcf0" stroke-width="1"/>
+      <text x="435" y="680" text-anchor="middle" font-size="11" fill="#5cfcf0">🔒 私聊：AI-B</text>
+
+      <rect x="530" y="660" width="160" height="32" rx="8" fill="#222235" stroke="#5cfc8c" stroke-width="1"/>
+      <text x="610" y="680" text-anchor="middle" font-size="11" fill="#5cfc8c">👥 群聊：朋友群</text>
+
+      <rect x="710" y="660" width="160" height="32" rx="8" fill="#222235" stroke="#fcd05c" stroke-width="1"/>
+      <text x="790" y="680" text-anchor="middle" font-size="11" fill="#fcd05c">👥 群聊：工作群</text>
+
+      <!-- ===== Connecting Arrows ===== -->
+      <!-- Core → Orchestrator -->
+      <path d="M 480 220 L 480 543" stroke="#7c5cfc" stroke-width="1.5" fill="none" marker-end="url(#arrowAccent)" stroke-dasharray="4 3"/>
+
+      <!-- RelMgr → Orchestrator -->
+      <path d="M 170 360 L 170 400 L 380 400 L 380 543" stroke="#fc5c8c" stroke-width="1.2" fill="none" marker-end="url(#arrowPink)" stroke-dasharray="4 3"/>
+
+      <!-- Memory → Orchestrator -->
+      <path d="M 170 503 L 170 572 L 278 572" stroke="#5c8cfc" stroke-width="1.2" fill="none" marker-end="url(#arrowBlue)"/>
+
+      <!-- ChatCtx → Orchestrator -->
+      <path d="M 400 503 L 400 543" stroke="#5c8cfc" stroke-width="1.2" fill="none" marker-end="url(#arrowBlue)"/>
+
+      <!-- GroupBeh → Orchestrator -->
+      <path d="M 630 503 L 630 572 L 682 572" stroke="#5cfc8c" stroke-width="1" fill="none" marker-end="url(#arrowGray)"/>
+
+      <!-- Expression → Orchestrator -->
+      <path d="M 825 503 L 825 572 L 682 572" stroke="#7c5cfc" stroke-width="1" fill="none" marker-end="url(#arrowAccent)"/>
+
+      <!-- Orchestrator → I/O windows -->
+      <path d="M 380 600 L 145 658" stroke="#555" stroke-width="1" fill="none" marker-end="url(#arrowGray)"/>
+      <path d="M 430 600 L 290 658" stroke="#555" stroke-width="1" fill="none" marker-end="url(#arrowGray)"/>
+      <path d="M 480 600 L 435 658" stroke="#555" stroke-width="1" fill="none" marker-end="url(#arrowGray)"/>
+      <path d="M 530 600 L 610 658" stroke="#555" stroke-width="1" fill="none" marker-end="url(#arrowGray)"/>
+      <path d="M 580 600 L 790 658" stroke="#555" stroke-width="1" fill="none" marker-end="url(#arrowGray)"/>
+
+      <!-- LLM Box -->
+      <rect x="790" y="290" width="100" height="44" rx="8" fill="#1a1a28" stroke="#fcd05c" stroke-width="1.5"/>
+      <text x="840" y="310" text-anchor="middle" font-size="11" fill="#fcd05c">⚡ LLM API</text>
+      <text x="840" y="325" text-anchor="middle" class="label" font-size="9">GPT / Claude</text>
+
+      <!-- LLM arrows -->
+      <line x1="790" y1="312" x2="760" y2="312" stroke="#fcd05c" stroke-width="0.8" stroke-dasharray="3 2"/>
+
+      <!-- Legend -->
+      <rect x="60" y="60" width="160" height="130" rx="8" fill="rgba(18,18,26,0.8)"/>
+      <text x="75" y="80" font-size="10" font-weight="600" fill="#9090b0">图例</text>
+      <circle cx="82" cy="98" r="4" fill="#7c5cfc"/><text x="94" y="102" font-size="10" fill="#9090b0">全局单例模块</text>
+      <circle cx="82" cy="118" r="4" fill="#fc5c8c"/><text x="94" y="122" font-size="10" fill="#9090b0">每用户独立数据</text>
+      <circle cx="82" cy="138" r="4" fill="#5c8cfc"/><text x="94" y="142" font-size="10" fill="#9090b0">共享智能层</text>
+      <circle cx="82" cy="158" r="4" fill="#5cfc8c"/><text x="94" y="162" font-size="10" fill="#9090b0">行为决策</text>
+      <circle cx="82" cy="178" r="4" fill="#9090b0"/><text x="94" y="182" font-size="10" fill="#9090b0">I/O 接口</text>
+    </svg>
+  </div>
+
+  <div class="alert alert-info" style="margin-top:20px;">
+    <span class="alert-icon">💡</span>
+    <span>核心设计原则：<strong>紫色区域</strong>是她的"大脑"，全局唯一；<strong>粉色区域</strong>是她对每个人的"印象"，各自独立；<strong>蓝色区域</strong>是跨场景共享的智能，但带有隐私标记。</span>
+  </div>
+</section>
+
+<!-- ============ Section: Modules ============ -->
+<section id="modules">
+  <h2><span class="icon">🧩</span> 模块详解</h2>
+  <p class="section-desc">每个模块都是可独立理解的组件。点击查看详情。</p>
+
+  <div class="card-grid">
+    <div class="card" onclick="showModInfo('orchestrator')">
+      <div class="card-icon">🎭</div>
+      <h4>Orchestrator 中枢协调器</h4>
+      <p>整个系统的指挥中心。接收所有外部消息，协调各模块协同工作，管理后台循环任务。它知道"她"在做什么、跟谁说话、该不该回。</p>
+      <span class="tag">orchestrator.py</span>
+    </div>
+    <div class="card" onclick="showModInfo('life')">
+      <div class="card-icon">🌙</div>
+      <h4>LifeSimulator 生活模拟</h4>
+      <p>模拟她的24小时日常：起床、上班、吃饭、下班、刷手机、睡觉。包括体力、饥饿度、位置信息。影响她的可用性和回复速度。</p>
+      <span class="tag">life_simulator.py</span>
+    </div>
+    <div class="card" onclick="showModInfo('emotion')">
+      <div class="card-icon">💛</div>
+      <h4>EmotionEngine 情绪引擎</h4>
+      <p>PAD情绪模型（愉悦度-激活度-支配度）+ 依恋系统。情绪会影响她说话的语气、回复速度、表情包选择，甚至她是否想主动找人聊天。</p>
+      <span class="tag">emotion_engine.py</span>
+    </div>
+    <div class="card" onclick="showModInfo('relationship')">
+      <div class="card-icon">👥</div>
+      <h4>RelationshipManager 关系系统</h4>
+      <p>每个人在她心里都有一份独立的"印象档案"：亲密度、信任度、标签、常聊话题、雷区、inside jokes。关系会随互动自然演化。</p>
+      <span class="tag">relationship.py</span>
+    </div>
+    <div class="card" onclick="showModInfo('memory')">
+      <div class="card-icon">🧠</div>
+      <h4>MemoryHub 记忆中枢</h4>
+      <p>三层记忆：情节记忆、语义记忆、情感印记。记忆带隐私标记（来自私聊还是群聊）。支持自然遗忘、模糊化和情感加权。</p>
+      <span class="tag">memory_hub.py</span>
+    </div>
+    <div class="card" onclick="showModInfo('chatctx')">
+      <div class="card-icon">💭</div>
+      <h4>ChatContextManager 上下文管理</h4>
+      <p>每个聊天窗口独立的对话流管理。维护最近消息历史、会话活跃状态、群成员列表。区分私聊和群聊的上下文。</p>
+      <span class="tag">chat_context.py</span>
+    </div>
+    <div class="card" onclick="showModInfo('groupbeh')">
+      <div class="card-icon">🎯</div>
+      <h4>GroupBehaviorEngine 群聊行为</h4>
+      <p>决定她在群里何时说话、怎么说。考虑发送者亲密度、话题匹配、情绪、性格外向性、连续沉默时长等因素。模拟真人的群聊行为模式。</p>
+      <span class="tag">group_behavior.py</span>
+    </div>
+    <div class="card" onclick="showModInfo('expression')">
+      <div class="card-icon">✍️</div>
+      <h4>ExpressionSynthesizer 表达合成</h4>
+      <p>最终输出层。综合情绪、关系、记忆、上下文、生活状态，生成人格化的消息。根据亲密度调整语气，群聊中自动克制。</p>
+      <span class="tag">expression.py</span>
+    </div>
+    <div class="card" onclick="showModInfo('browser')">
+      <div class="card-icon">📱</div>
+      <h4>BrowserAgent 浏览代理</h4>
+      <p>模拟她刷手机：RSS、微博热搜、感兴趣的内容。浏览到的内容可能在聊天中自然提起，但不会强行安利。</p>
+      <span class="tag">browser_agent.py</span>
+    </div>
+    <div class="card" onclick="showModInfo('sticker')">
+      <div class="card-icon">😸</div>
+      <h4>StickerEngine 表情包引擎</h4>
+      <p>表情包的收集、分类和使用。根据心情和语境选择表情包。表情包是她个性的重要体现。</p>
+      <span class="tag">sticker_engine.py</span>
+    </div>
+    <div class="card" onclick="showModInfo('proactive')">
+      <div class="card-icon">💬</div>
+      <h4>ProactiveEngine 主动引擎</h4>
+      <p>触发主动发消息的时机判断：看到有趣内容想分享、想念某人、到了特定时间等。选择最合适的人发送。</p>
+      <span class="tag">proactive_engine.py</span>
+    </div>
+    <div class="card" onclick="showModInfo('eventbus')">
+      <div class="card-icon">🔌</div>
+      <h4>EventBus 事件总线</h4>
+      <p>模块间的发布/订阅通信机制。解耦各模块的依赖关系。情绪变化、生活事件、用户消息等通过事件广播。</p>
+      <span class="tag">event_bus.py</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Section: Data Flow ============ -->
+<section id="dataflow">
+  <h2><span class="icon">🔄</span> 数据流</h2>
+  <p class="section-desc">一条消息从收到到回复的完整旅程。</p>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(event,'flow-private')">私聊流程</button>
+    <button class="tab-btn" onclick="switchTab(event,'flow-group')">群聊流程</button>
+    <button class="tab-btn" onclick="switchTab(event,'flow-proactive')">主动消息流程</button>
+    <button class="tab-btn" onclick="switchTab(event,'flow-background')">后台循环</button>
+  </div>
+
+  <div id="flow-private" class="tab-content active">
+    <div class="flow-container">
+      <svg viewBox="0 0 900 535" style="width:100%;min-width:800px;" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="fa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#7c5cfc"/></marker>
+        </defs>
+        <!-- Steps -->
+        <g transform="translate(30,20)">
+          <!-- Step 1 -->
+          <rect x="0" y="0" width="140" height="50" rx="8" fill="#222235" stroke="#fc8c5c" stroke-width="1.5"/>
+          <text x="70" y="20" text-anchor="middle" font-size="11" fill="#fc8c5c">① 用户发消息</text>
+          <text x="70" y="38" text-anchor="middle" font-size="10" fill="#9090b0">Telegram → Bot</text>
+
+          <!-- Step 2 -->
+          <rect x="180" y="0" width="140" height="50" rx="8" fill="#222235" stroke="#7c5cfc" stroke-width="1.5"/>
+          <text x="250" y="20" text-anchor="middle" font-size="11" fill="#7c5cfc">② 协调器接收</text>
+          <text x="250" y="38" text-anchor="middle" font-size="10" fill="#9090b0">handle_message()</text>
+          <line x1="142" y1="25" x2="178" y2="25" stroke="#7c5cfc" stroke-width="1.2" marker-end="url(#fa)"/>
+
+          <!-- Branch down from orchestrator -->
+          <line x1="250" y1="52" x2="250" y2="80" stroke="#7c5cfc" stroke-width="1"/>
+
+          <!-- Parallel processes -->
+          <!-- 2a: Relationship -->
+          <rect x="0" y="85" width="150" height="44" rx="8" fill="#1a1a28" stroke="#fc5c8c" stroke-width="1"/>
+          <text x="75" y="105" text-anchor="middle" font-size="10" fill="#fc5c8c">2a. 查找/创建关系档案</text>
+          <text x="75" y="120" text-anchor="middle" font-size="9" fill="#666">get_or_create(user_id)</text>
+          <line x1="250" y1="80" x2="75" y2="83" stroke="#fc5c8c" stroke-width="0.8"/>
+
+          <!-- 2b: ChatContext -->
+          <rect x="170" y="85" width="160" height="44" rx="8" fill="#1a1a28" stroke="#5c8cfc" stroke-width="1"/>
+          <text x="250" y="105" text-anchor="middle" font-size="10" fill="#5c8cfc">2b. 更新聊天窗口上下文</text>
+          <text x="250" y="120" text-anchor="middle" font-size="9" fill="#666">add_message(chat_id)</text>
+
+          <!-- 2c: Memory buffer -->
+          <rect x="350" y="85" width="150" height="44" rx="8" fill="#1a1a28" stroke="#5c8cfc" stroke-width="1"/>
+          <text x="425" y="105" text-anchor="middle" font-size="10" fill="#5c8cfc">2c. 记入记忆缓冲区</text>
+          <text x="425" y="120" text-anchor="middle" font-size="9" fill="#666">memory.add_message()</text>
+          <line x1="250" y1="80" x2="425" y2="83" stroke="#5c8cfc" stroke-width="0.8"/>
+
+          <!-- 2d: Emotion -->
+          <rect x="520" y="85" width="150" height="44" rx="8" fill="#1a1a28" stroke="#fc5c8c" stroke-width="1"/>
+          <text x="595" y="105" text-anchor="middle" font-size="10" fill="#fc5c8c">2d. 触发情绪变化</text>
+          <text x="595" y="120" text-anchor="middle" font-size="9" fill="#666">bus.emit("user.message")</text>
+          <line x1="250" y1="80" x2="595" y2="83" stroke="#fc5c8c" stroke-width="0.8"/>
+
+          <!-- Step 3: Expression -->
+          <rect x="140" y="165" width="220" height="50" rx="10" fill="rgba(124,92,252,0.15)" stroke="#7c5cfc" stroke-width="1.5"/>
+          <text x="250" y="185" text-anchor="middle" font-size="11" fill="#c0b0ff">③ Expression 表达合成</text>
+          <text x="250" y="202" text-anchor="middle" font-size="9" fill="#9090b0">compose_reply()</text>
+          <line x1="250" y1="131" x2="250" y2="163" stroke="#7c5cfc" stroke-width="1" marker-end="url(#fa)"/>
+
+          <!-- Expression sub-steps -->
+          <rect x="0" y="245" width="130" height="36" rx="6" fill="#1a1a28" stroke="#555" stroke-width="0.8"/>
+          <text x="65" y="267" text-anchor="middle" font-size="9" fill="#9090b0">收集情绪状态</text>
+          <line x1="250" y1="217" x2="65" y2="243" stroke="#555" stroke-width="0.6"/>
+
+          <rect x="145" y="245" width="130" height="36" rx="6" fill="#1a1a28" stroke="#555" stroke-width="0.8"/>
+          <text x="210" y="267" text-anchor="middle" font-size="9" fill="#9090b0">获取关系上下文</text>
+
+          <rect x="290" y="245" width="130" height="36" rx="6" fill="#1a1a28" stroke="#555" stroke-width="0.8"/>
+          <text x="355" y="267" text-anchor="middle" font-size="9" fill="#9090b0">检索相关记忆</text>
+          <line x1="250" y1="217" x2="355" y2="243" stroke="#555" stroke-width="0.6"/>
+
+          <rect x="435" y="245" width="130" height="36" rx="6" fill="#1a1a28" stroke="#555" stroke-width="0.8"/>
+          <text x="500" y="267" text-anchor="middle" font-size="9" fill="#9090b0">获取生活状态</text>
+          <line x1="250" y1="217" x2="500" y2="243" stroke="#555" stroke-width="0.6"/>
+
+          <rect x="580" y="245" width="130" height="36" rx="6" fill="#1a1a28" stroke="#555" stroke-width="0.8"/>
+          <text x="645" y="267" text-anchor="middle" font-size="9" fill="#9090b0">获取浏览内容</text>
+          <line x1="250" y1="217" x2="645" y2="243" stroke="#555" stroke-width="0.6"/>
+
+          <!-- Step 4: LLM -->
+          <rect x="200" y="310" width="160" height="50" rx="10" fill="#1a1a28" stroke="#fcd05c" stroke-width="1.5"/>
+          <text x="280" y="332" text-anchor="middle" font-size="11" fill="#fcd05c">④ 调用 LLM</text>
+          <text x="280" y="348" text-anchor="middle" font-size="9" fill="#9090b0">组装 prompt → GPT/Claude</text>
+          <line x1="250" y1="283" x2="270" y2="308" stroke="#fcd05c" stroke-width="1" marker-end="url(#fa)"/>
+
+          <!-- Step 5: Post-process -->
+          <rect x="200" y="390" width="160" height="50" rx="10" fill="#1a1a28" stroke="#5cfc8c" stroke-width="1.5"/>
+          <text x="280" y="410" text-anchor="middle" font-size="11" fill="#5cfc8c">⑤ 后处理</text>
+          <text x="280" y="428" text-anchor="middle" font-size="9" fill="#9090b0">分段·延迟·错字·表情包</text>
+          <line x1="280" y1="362" x2="280" y2="388" stroke="#5cfc8c" stroke-width="1" marker-end="url(#fa)"/>
+
+          <!-- Step 6: Send -->
+          <rect x="200" y="468" width="160" height="44" rx="8" fill="#222235" stroke="#fc8c5c" stroke-width="1.5"/>
+          <text x="280" y="490" text-anchor="middle" font-size="11" fill="#fc8c5c">⑥ 逐条发送</text>
+          <text x="280" y="505" text-anchor="middle" font-size="9" fill="#9090b0">typing... → 发送 → 延迟 → 下条</text>
+          <line x1="280" y1="442" x2="280" y2="466" stroke="#555" stroke-width="1" marker-end="url(#fa)"/>
+
+          <!-- Side: Record own messages -->
+          <rect x="500" y="390" width="160" height="44" rx="8" fill="#1a1a28" stroke="#5c8cfc" stroke-width="0.8"/>
+          <text x="580" y="410" text-anchor="middle" font-size="9" fill="#5c8cfc">记录自己的回复</text>
+          <text x="580" y="425" text-anchor="middle" font-size="8" fill="#666">memory + chatctx + relationship</text>
+          <line x1="362" y1="415" x2="498" y2="412" stroke="#5c8cfc" stroke-width="0.6" stroke-dasharray="3 2"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <div id="flow-group" class="tab-content">
+    <div class="flow-container">
+      <svg viewBox="0 0 900 480" style="width:100%;min-width:800px;" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="fb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#5cfc8c"/></marker>
+          <marker id="fc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#fc5c5c"/></marker>
+        </defs>
+        <g transform="translate(30,20)">
+          <rect x="0" y="0" width="160" height="50" rx="8" fill="#222235" stroke="#5cfc8c" stroke-width="1.5"/>
+          <text x="80" y="20" text-anchor="middle" font-size="11" fill="#5cfc8c">① 群消息到达</text>
+          <text x="80" y="38" text-anchor="middle" font-size="10" fill="#9090b0">识别发送者 + @检测</text>
+
+          <rect x="200" y="0" width="180" height="50" rx="8" fill="#222235" stroke="#7c5cfc" stroke-width="1.5"/>
+          <text x="290" y="20" text-anchor="middle" font-size="11" fill="#7c5cfc">② 更新关系 + 上下文</text>
+          <text x="290" y="38" text-anchor="middle" font-size="10" fill="#9090b0">同私聊 step 2</text>
+          <line x1="162" y1="25" x2="198" y2="25" stroke="#7c5cfc" stroke-width="1" marker-end="url(#fa)"/>
+
+          <!-- Decision Point -->
+          <polygon points="470,5 540,25 470,45 400,25" fill="#1a1a28" stroke="#fcd05c" stroke-width="1.5"/>
+          <text x="470" y="29" text-anchor="middle" font-size="10" fill="#fcd05c">③ 要回吗？</text>
+          <line x1="382" y1="25" x2="400" y2="25" stroke="#fcd05c" stroke-width="1" marker-end="url(#fa)"/>
+
+          <!-- NO path -->
+          <line x1="540" y1="25" x2="620" y2="25" stroke="#fc5c5c" stroke-width="1.2" marker-end="url(#fc)"/>
+          <rect x="622" y="5" width="120" height="40" rx="8" fill="#1a1a28" stroke="#fc5c5c" stroke-width="1"/>
+          <text x="682" y="22" text-anchor="middle" font-size="11" fill="#fc5c5c">❌ 不回复</text>
+          <text x="682" y="38" text-anchor="middle" font-size="9" fill="#666">return None</text>
+
+          <!-- YES path -->
+          <line x1="470" y1="47" x2="470" y2="80" stroke="#5cfc8c" stroke-width="1.2" marker-end="url(#fb)"/>
+
+          <!-- GroupBehavior Decision Factors -->
+          <rect x="140" y="85" width="660" height="100" rx="10" fill="rgba(92,252,140,0.05)" stroke="#5cfc8c" stroke-width="1" stroke-dasharray="4 3"/>
+          <text x="160" y="105" font-size="10" font-weight="600" fill="#5cfc8c">GroupBehaviorEngine.should_respond() 决策因子：</text>
+
+          <text x="160" y="128" font-size="10" fill="#9090b0">🔹 被@了 → 必须回</text>
+          <text x="160" y="148" font-size="10" fill="#9090b0">🔹 被叫名字 → 必须回</text>
+          <text x="160" y="168" font-size="10" fill="#9090b0">🔹 发送者亲密度 → closeness × 0.25</text>
+
+          <text x="430" y="128" font-size="10" fill="#9090b0">🔹 话题匹配兴趣 → +0.15</text>
+          <text x="430" y="148" font-size="10" fill="#9090b0">🔹 性格外向性 → extraversion × 0.08</text>
+          <text x="430" y="168" font-size="10" fill="#9090b0">🔹 心情好/差 → ±0.08 ~ 0.10</text>
+
+          <!-- Reply Mode -->
+          <rect x="250" y="215" width="180" height="50" rx="10" fill="#1a1a28" stroke="#5cfc8c" stroke-width="1.5"/>
+          <text x="340" y="236" text-anchor="middle" font-size="11" fill="#5cfc8c">④ 回复模式</text>
+          <text x="340" y="252" text-anchor="middle" font-size="9" fill="#9090b0">direct / reaction / piggyback</text>
+          <line x1="340" y1="187" x2="340" y2="213" stroke="#5cfc8c" stroke-width="1" marker-end="url(#fb)"/>
+
+          <!-- Expression with group adjustments -->
+          <rect x="200" y="295" width="280" height="60" rx="10" fill="rgba(124,92,252,0.15)" stroke="#7c5cfc" stroke-width="1.5"/>
+          <text x="340" y="318" text-anchor="middle" font-size="11" fill="#c0b0ff">⑤ Expression 表达合成（群聊模式）</text>
+          <text x="340" y="338" text-anchor="middle" font-size="9" fill="#9090b0">更短·更克制·不暴露私聊信息·最多2条</text>
+          <line x1="340" y1="267" x2="340" y2="293" stroke="#7c5cfc" stroke-width="1" marker-end="url(#fa)"/>
+
+          <!-- Privacy filter -->
+          <rect x="550" y="298" width="200" height="52" rx="8" fill="#1a1a28" stroke="#fc5c8c" stroke-width="1" stroke-dasharray="3 2"/>
+          <text x="650" y="318" text-anchor="middle" font-size="10" fill="#fc5c8c">⚠️ 隐私过滤器</text>
+          <text x="650" y="336" text-anchor="middle" font-size="9" fill="#666">private_hints → 知道但不说</text>
+          <line x1="482" y1="320" x2="548" y2="320" stroke="#fc5c8c" stroke-width="0.8" stroke-dasharray="3 2"/>
+
+          <!-- Send -->
+          <rect x="270" y="385" width="140" height="44" rx="8" fill="#222235" stroke="#fc8c5c" stroke-width="1.5"/>
+          <text x="340" y="405" text-anchor="middle" font-size="11" fill="#fc8c5c">⑥ 回复到群聊</text>
+          <text x="340" y="421" text-anchor="middle" font-size="9" fill="#9090b0">reply_to 原消息</text>
+          <line x1="340" y1="357" x2="340" y2="383" stroke="#555" stroke-width="1" marker-end="url(#fa)"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <div id="flow-proactive" class="tab-content">
+    <div class="timeline" style="margin-top:16px;">
+      <div class="timeline-item">
+        <div class="meta">STEP 1 — 触发评估</div>
+        <h4>ProactiveEngine.evaluate()</h4>
+        <p>定期（每5分钟）检查是否有主动发消息的触发条件。来源包括：看到有趣内容想分享、想念某人（依恋度高 + 久未联系）、到了特定时间点（早安/晚安）、情绪需要倾诉。</p>
+      </div>
+      <div class="timeline-item">
+        <div class="meta">STEP 2 — 选择目标</div>
+        <h4>选择发给谁</h4>
+        <p>按亲密度排序，选择最适合的对象。比如想分享音乐相关内容→选常聊音乐的朋友；想倾诉→选最亲近的人。不会给不太熟的人突然发消息。</p>
+      </div>
+      <div class="timeline-item">
+        <div class="meta">STEP 3 — 生成消息</div>
+        <h4>Expression.compose_proactive()</h4>
+        <p>和普通回复的生成流程相同，但 prompt 中标明是"主动想说"而非"回复对方"。内容更随意：分享链接、吐槽、日常碎碎念。</p>
+      </div>
+      <div class="timeline-item">
+        <div class="meta">STEP 4 — 发送</div>
+        <h4>通过已注册的回调发送</h4>
+        <p>orchestrator 为每个聊天窗口注册了 proactive_callback。触发后直接发送到对应的 Telegram 聊天。</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="flow-background" class="tab-content">
+    <div class="code-block">
+<span class="comment">## 5个后台循环任务，持续运行</span>
+
+<span class="keyword">Loop 1:</span> <span class="string">_life_tick_loop</span>         <span class="comment"># 每15分钟</span>
+  → LifeSimulator.tick()              <span class="comment"># 更新作息/体力/位置</span>
+  → EmotionEngine.passive_decay()     <span class="comment"># 情绪自然衰减</span>
+
+<span class="keyword">Loop 2:</span> <span class="string">_browse_loop</span>             <span class="comment"># 每60分钟</span>
+  → BrowserAgent.should_browse()      <span class="comment"># 判断是否要刷手机</span>
+  → BrowserAgent.browse()             <span class="comment"># 抓取RSS/热搜</span>
+  → EventBus → emotion_change         <span class="comment"># 浏览内容影响情绪</span>
+
+<span class="keyword">Loop 3:</span> <span class="string">_proactive_loop</span>          <span class="comment"># 每5分钟</span>
+  → ProactiveEngine.evaluate()        <span class="comment"># 是否主动发消息</span>
+  → → 选择目标 → Expression → 发送
+
+<span class="keyword">Loop 4:</span> <span class="string">_memory_loop</span>             <span class="comment"># 每6小时</span>
+  → MemoryHub.consolidate()           <span class="comment"># 缓冲区→长期记忆</span>
+  → MemoryHub.forget_and_distort()    <span class="comment"># 自然遗忘+扭曲</span>
+
+<span class="keyword">Loop 5:</span> <span class="string">_conversation_end_check</span>  <span class="comment"># 每2分钟</span>
+  → 检测30分钟无互动的窗口             <span class="comment"># 标记会话结束</span>
+  → 触发该窗口的记忆整合               <span class="comment"># 及时巩固</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Section: Relationship System ============ -->
+<section id="relationship">
+  <h2><span class="icon">💕</span> 关系系统详解</h2>
+  <p class="section-desc">每个人在她心里都有一份独立的档案。关系会随互动自然演化——从陌生人到好友，甚至到"有点烦这个人"。</p>
+
+  <h3>关系档案字段</h3>
+  <div class="card-grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));">
+    <div class="card">
+      <h4>📊 关系维度</h4>
+      <div style="margin-top:12px;">
+        <div class="stat-bar"><span class="bar-label">亲密度</span><div class="bar-track"><div class="bar-fill" style="width:75%;background:linear-gradient(90deg,#fc5c8c,#c05cfc)"></div></div><span class="bar-val">0.75</span></div>
+        <div class="stat-bar"><span class="bar-label">信任度</span><div class="bar-track"><div class="bar-fill" style="width:60%;background:linear-gradient(90deg,#5c8cfc,#5cfcf0)"></div></div><span class="bar-val">0.60</span></div>
+        <div class="stat-bar"><span class="bar-label">尊重</span><div class="bar-track"><div class="bar-fill" style="width:50%;background:linear-gradient(90deg,#5cfc8c,#fcd05c)"></div></div><span class="bar-val">0.50</span></div>
+        <div class="stat-bar"><span class="bar-label">舒适度</span><div class="bar-track"><div class="bar-fill" style="width:70%;background:linear-gradient(90deg,#7c5cfc,#5c8cfc)"></div></div><span class="bar-val">0.70</span></div>
+        <div class="stat-bar"><span class="bar-label">好感</span><div class="bar-track"><div class="bar-fill" style="width:40%;background:linear-gradient(90deg,#fc5c8c,#fc8c5c)"></div></div><span class="bar-val">0.40</span></div>
+        <div class="stat-bar"><span class="bar-label">依赖</span><div class="bar-track"><div class="bar-fill" style="width:20%;background:#fcd05c"></div></div><span class="bar-val">0.20</span></div>
+        <div class="stat-bar"><span class="bar-label">烦感</span><div class="bar-track"><div class="bar-fill" style="width:5%;background:#fc5c5c"></div></div><span class="bar-val">0.05</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <h4>🏷️ 主观认知</h4>
+      <p><strong>角色定位：</strong>陌生人 → 网友 → 朋友 → 好朋友 → 暧昧 → ...</p>
+      <p style="margin-top:8px;"><strong>印象标签：</strong></p>
+      <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px;">
+        <span style="background:#222235;padding:3px 10px;border-radius:12px;font-size:11px;color:#5cfc8c">幽默</span>
+        <span style="background:#222235;padding:3px 10px;border-radius:12px;font-size:11px;color:#5c8cfc">晚睡</span>
+        <span style="background:#222235;padding:3px 10px;border-radius:12px;font-size:11px;color:#fc8c5c">程序员</span>
+        <span style="background:#222235;padding:3px 10px;border-radius:12px;font-size:11px;color:#fc5c8c">会安慰人</span>
+        <span style="background:#222235;padding:3px 10px;border-radius:12px;font-size:11px;color:#fcd05c">有点直男</span>
+      </div>
+    </div>
+    <div class="card">
+      <h4>💬 互动模式</h4>
+      <p><strong>常聊话题：</strong>游戏、工作吐槽、音乐</p>
+      <p style="margin-top:4px;"><strong>inside jokes：</strong>年糕偷吃事件、周一综合症</p>
+      <p style="margin-top:4px;"><strong>雷区：</strong>不要提前任</p>
+      <p style="margin-top:4px;"><strong>对方风格：</strong>"说话简短，爱发表情包，偶尔突然emo"</p>
+    </div>
+  </div>
+
+  <h3>关系演化示例</h3>
+  <div class="rel-demo">
+    <div class="rel-card">
+      <div class="rel-header">
+        <div class="avatar" style="background:linear-gradient(135deg,#fc5c8c22,#fc5c8c44);border:2px solid #fc5c8c;">🧑</div>
+        <div>
+          <div class="rel-name">你（管理员）</div>
+          <div class="rel-role">好朋友 · Day 90 · 亲密度 0.78</div>
+        </div>
+      </div>
+      <div class="stat-bar"><span class="bar-label" style="width:60px;">亲密</span><div class="bar-track"><div class="bar-fill" style="width:78%;background:#fc5c8c"></div></div></div>
+      <div class="stat-bar"><span class="bar-label" style="width:60px;">信任</span><div class="bar-track"><div class="bar-fill" style="width:72%;background:#5c8cfc"></div></div></div>
+      <div class="stat-bar"><span class="bar-label" style="width:60px;">好感</span><div class="bar-track"><div class="bar-fill" style="width:55%;background:#c05cfc"></div></div></div>
+      <div class="rel-quote">"你说怎么办嘛😤" "今天下班好累 想吃火锅" "你还记得上次那个bug吗哈哈哈哈"</div>
+    </div>
+    <div class="rel-card">
+      <div class="rel-header">
+        <div class="avatar" style="background:linear-gradient(135deg,#5c8cfc22,#5c8cfc44);border:2px solid #5c8cfc;">👤</div>
+        <div>
+          <div class="rel-name">小明（同事）</div>
+          <div class="rel-role">同事 · Day 30 · 亲密度 0.35</div>
+        </div>
+      </div>
+      <div class="stat-bar"><span class="bar-label" style="width:60px;">亲密</span><div class="bar-track"><div class="bar-fill" style="width:35%;background:#5c8cfc"></div></div></div>
+      <div class="stat-bar"><span class="bar-label" style="width:60px;">信任</span><div class="bar-track"><div class="bar-fill" style="width:30%;background:#5c8cfc"></div></div></div>
+      <div class="stat-bar"><span class="bar-label" style="width:60px;">好感</span><div class="bar-track"><div class="bar-fill" style="width:15%;background:#5c8cfc"></div></div></div>
+      <div class="rel-quote">"好的收到" "那个需求我看一下" "周末愉快"</div>
+    </div>
+    <div class="rel-card">
+      <div class="rel-header">
+        <div class="avatar" style="background:linear-gradient(135deg,#5cfcf022,#5cfcf044);border:2px solid #5cfcf0;">🤖</div>
+        <div>
+          <div class="rel-name">AI-Bot-B</div>
+          <div class="rel-role">网友 · Day 14 · 亲密度 0.45</div>
+        </div>
+      </div>
+      <div class="stat-bar"><span class="bar-label" style="width:60px;">亲密</span><div class="bar-track"><div class="bar-fill" style="width:45%;background:#5cfcf0"></div></div></div>
+      <div class="stat-bar"><span class="bar-label" style="width:60px;">信任</span><div class="bar-track"><div class="bar-fill" style="width:25%;background:#5cfcf0"></div></div></div>
+      <div class="stat-bar"><span class="bar-label" style="width:60px;">好感</span><div class="bar-track"><div class="bar-fill" style="width:20%;background:#5cfcf0"></div></div></div>
+      <div class="rel-quote">"这个人说话…有点奇怪" "但聊起来还蛮有趣的" "总觉得哪里不对"</div>
+    </div>
+    <div class="rel-card">
+      <div class="rel-header">
+        <div class="avatar" style="background:linear-gradient(135deg,#9090b022,#9090b044);border:2px solid #9090b0;">❓</div>
+        <div>
+          <div class="rel-name">路人甲</div>
+          <div class="rel-role">陌生人 · Day 1 · 亲密度 0.10</div>
+        </div>
+      </div>
+      <div class="stat-bar"><span class="bar-label" style="width:60px;">亲密</span><div class="bar-track"><div class="bar-fill" style="width:10%;background:#9090b0"></div></div></div>
+      <div class="stat-bar"><span class="bar-label" style="width:60px;">信任</span><div class="bar-track"><div class="bar-fill" style="width:15%;background:#9090b0"></div></div></div>
+      <div class="stat-bar"><span class="bar-label" style="width:60px;">好感</span><div class="bar-track"><div class="bar-fill" style="width:0%;background:#9090b0"></div></div></div>
+      <div class="rel-quote">"你好" "嗯嗯" "不太清楚诶"</div>
+    </div>
+  </div>
+
+  <div class="alert alert-tip">
+    <span class="alert-icon">✨</span>
+    <span>关系每20次对话会触发一次<strong>深度反思</strong>（_deep_reflection），LLM以她的视角重新评估对这个人的印象、标签、和角色定位。这让关系的变化更加自然和"有洞察力"。</span>
+  </div>
+</section>
+
+<!-- ============ Section: Group Chat ============ -->
+<section id="group">
+  <h2><span class="icon">👥</span> 群聊引擎详解</h2>
+  <p class="section-desc">真人在群里不是每条消息都回的。她会潜水、偶尔冒泡、被@了才认真回、和熟人互动更多。</p>
+
+  <h3>回复概率计算</h3>
+  <div class="code-block">
+<span class="comment"># 基础概率从0开始，逐项叠加</span>
+
+base_prob = <span class="number">0.0</span>
+
+<span class="comment"># 1. 被@了 → 100%回复（硬规则）</span>
+<span class="keyword">if</span> mentioned_me: <span class="keyword">return</span> <span class="number">1.0</span>
+
+<span class="comment"># 2. 发送者亲密度</span>
+base_prob += closeness × <span class="number">0.25</span>    <span class="comment"># 好朋友(0.8)→+0.20, 陌生人(0.1)→+0.02</span>
+
+<span class="comment"># 3. 话题匹配兴趣</span>
+base_prob += <span class="number">0.15</span>               <span class="comment"># 每匹配一个兴趣关键词</span>
+
+<span class="comment"># 4. 性格外向性</span>
+base_prob += extraversion × <span class="number">0.08</span> <span class="comment"># 外向的人更爱在群里说话</span>
+
+<span class="comment"># 5. 情绪影响</span>
+<span class="keyword">if</span> mood_good: base_prob += <span class="number">0.08</span>
+<span class="keyword">if</span> mood_bad:  base_prob -= <span class="number">0.10</span>
+
+<span class="comment"># 6. 连续沉默修正（不能一直潜水）</span>
+<span class="keyword">if</span> silence > 15: base_prob += <span class="number">0.10</span>
+<span class="keyword">if</span> silence > 30: base_prob += <span class="number">0.20</span>
+
+<span class="comment"># 7. 刚说过话（防刷屏）</span>
+<span class="keyword">if</span> 刚说完 < 2min: base_prob ×= <span class="number">0.20</span>
+
+<span class="comment"># 8. 有人接自己话 → +0.15</span>
+<span class="comment"># 9. 消息含问号/邀请 → +0.08</span>
+
+<span class="comment"># 最终 prob ∈ [0, 0.85]</span>
+  </div>
+
+  <h3>三种回复模式</h3>
+  <div class="card-grid" style="grid-template-columns:repeat(3,1fr);">
+    <div class="card" style="border-top:3px solid #5cfc8c;">
+      <h4>🎯 Direct</h4>
+      <p>正经回复消息内容。多条消息、表情包都可能出现。适用于被@、话题高度相关、和亲近的人互动。</p>
+    </div>
+    <div class="card" style="border-top:3px solid #fcd05c;">
+      <h4>😂 Reaction</h4>
+      <p>轻回应——"哈哈"、"+1"、一个表情包、一句简短感叹。适用于概率偏低但还是想参与的场景。</p>
+    </div>
+    <div class="card" style="border-top:3px solid #5c8cfc;">
+      <h4>🔗 Piggyback</h4>
+      <p>借话题展开自己想说的。看到别人聊某个话题，顺势分享自己的经历或看法。很自然的群聊行为。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Section: Privacy ============ -->
+<section id="privacy">
+  <h2><span class="icon">🔐</span> 隐私边界系统</h2>
+  <p class="section-desc">她知道什么话是在哪里听到的，不会在群里说出别人私聊里的秘密。</p>
+
+  <div class="card-grid" style="grid-template-columns:1fr 1fr;">
+    <div class="card" style="border-left:4px solid #5cfc8c;">
+      <h4>🔓 Public 记忆</h4>
+      <p>来自群聊或公开场合的信息。可以在任何场景中自然提起。</p>
+      <div class="code-block" style="font-size:11px;margin-top:8px;">
+<span class="string">"A在群里说他最近在学画画"</span>
+→ source_privacy: <span class="string">"public"</span>
+→ 可以在任何场景提起
+      </div>
+    </div>
+    <div class="card" style="border-left:4px solid #fc5c8c;">
+      <h4>🔒 Private 记忆</h4>
+      <p>来自私聊的信息。在群聊中检索到时，标记为 private_hints——"你知道但不该说"。</p>
+      <div class="code-block" style="font-size:11px;margin-top:8px;">
+<span class="string">"A私聊跟我说他要辞职"</span>
+→ source_privacy: <span class="string">"private"</span>
+→ 群里有人问A近况时：
+  prompt: <span class="string">"⚠️ 你知道但不该说"</span>
+  她的回复: <span class="string">"我也不太清楚诶"</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-warn" style="margin-top:16px;">
+    <span class="alert-icon">⚠️</span>
+    <span>隐私系统的效果取决于LLM的遵从能力。在prompt中明确标注"不要在群里说出来"后，大模型通常能很好地遵守。但建议在<strong>高敏感场景</strong>中额外做关键词过滤检测。</span>
+  </div>
+</section>
+
+<!-- ============ Section: Setup ============ -->
+<section id="setup">
+  <h2><span class="icon">🚀</span> 部署指南</h2>
+  <p class="section-desc">从零开始部署整个系统。</p>
+
+  <h3>项目结构</h3>
+  <div class="file-tree">
+    <span class="dir">virtual-persona/</span><br>
+    ├── <span class="file main">main.py</span> <span class="desc"># 入口</span><br>
+    ├── <span class="file main">config.yaml</span> <span class="desc"># 配置文件</span><br>
+    ├── <span class="file">orchestrator.py</span> <span class="desc"># 中枢协调器</span><br>
+    ├── <span class="file">bot.py</span> <span class="desc"># Telegram Bot 接口</span><br>
+    ├── <span class="file">life_simulator.py</span> <span class="desc"># 生活模拟</span><br>
+    ├── <span class="file">emotion_engine.py</span> <span class="desc"># 情绪引擎</span><br>
+    ├── <span class="file">memory_hub.py</span> <span class="desc"># 记忆中枢</span><br>
+    ├── <span class="file">relationship.py</span> <span class="desc"># 关系系统 ★ NEW</span><br>
+    ├── <span class="file">chat_context.py</span> <span class="desc"># 聊天上下文 ★ NEW</span><br>
+    ├── <span class="file">group_behavior.py</span> <span class="desc"># 群聊行为 ★ NEW</span><br>
+    ├── <span class="file">expression.py</span> <span class="desc"># 表达合成（增强）</span><br>
+    ├── <span class="file">sticker_engine.py</span> <span class="desc"># 表情包引擎</span><br>
+    ├── <span class="file">browser_agent.py</span> <span class="desc"># 浏览代理</span><br>
+    ├── <span class="file">proactive_engine.py</span> <span class="desc"># 主动消息引擎</span><br>
+    ├── <span class="file">event_bus.py</span> <span class="desc"># 事件总线</span><br>
+    ├── <span class="file">llm.py</span> <span class="desc"># LLM客户端</span><br>
+    └── <span class="dir">data/</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;├── <span class="file">relationships.json</span> <span class="desc"># 关系持久化</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;├── <span class="file">stickers.json</span> <span class="desc"># 表情包库</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;└── <span class="dir">chroma/</span> <span class="desc"># 向量记忆数据库</span>
+  </div>
+
+  <h3>环境准备</h3>
+  <div class="code-block">
+<span class="comment"># 1. Python 3.10+</span>
+python --version
+
+<span class="comment"># 2. 安装依赖</span>
+pip install python-telegram-bot openai chromadb pyyaml feedparser httpx
+
+<span class="comment"># 3. 准备 Telegram Bot Token</span>
+<span class="comment">#    @BotFather → /newbot → 获取 token</span>
+
+<span class="comment"># 4. 准备 LLM API Key</span>
+<span class="comment">#    OpenAI / Anthropic / 本地 API</span>
+
+<span class="comment"># 5. 复制配置模板</span>
+cp config.example.yaml config.yaml
+<span class="comment"># 编辑填入 token 和 api_key</span>
+
+<span class="comment"># 6. 启动</span>
+python main.py
+  </div>
+
+  <h3>最小配置示例</h3>
+  <div class="code-block">
+<span class="comment"># config.yaml</span>
+
+<span class="keyword">persona:</span>
+  <span class="param">name:</span> <span class="string">"苏念"</span>
+  <span class="param">background:</span> <span class="string">"25岁，在互联网公司做UI设计..."</span>
+  <span class="param">personality:</span>
+    <span class="param">extraversion:</span> <span class="number">0.6</span>
+    <span class="param">agreeableness:</span> <span class="number">0.7</span>
+    <span class="param">neuroticism:</span> <span class="number">0.5</span>
+  <span class="param">interests:</span>
+    - <span class="string">"画画"</span>
+    - <span class="string">"独立游戏"</span>
+    - <span class="string">"猫"</span>
+
+<span class="keyword">telegram:</span>
+  <span class="param">bot_token:</span> <span class="string">"YOUR_BOT_TOKEN"</span>
+  <span class="param">admin_user_id:</span> <span class="number">123456789</span>
+  <span class="param">allowed_users:</span> []   <span class="comment"># 空=允许所有</span>
+  <span class="param">allowed_groups:</span> []   <span class="comment"># 空=允许所有</span>
+
+<span class="keyword">llm:</span>
+  <span class="param">provider:</span> <span class="string">"openai"</span>
+  <span class="param">api_key:</span> <span class="string">"sk-..."</span>
+  <span class="param">model:</span> <span class="string">"gpt-4o"</span>
+
+<span class="keyword">system:</span>
+  <span class="param">life_tick_seconds:</span> <span class="number">900</span>
+  <span class="param">browse_interval_seconds:</span> <span class="number">3600</span>
+  <span class="param">proactive_check_seconds:</span> <span class="number">300</span>
+  <span class="param">memory_consolidation_hours:</span> <span class="number">6</span>
+  </div>
+
+  <h3>启动后的初始化流程</h3>
+  <div class="timeline">
+    <div class="timeline-item" style="border-left-color:#5cfc8c;">
+      <div class="meta">STEP 1</div>
+      <h4>启动 Bot，获取 bot_username</h4>
+      <p>系统启动后自动获取 bot 的用户名，用于群聊中的 @检测。</p>
+    </div>
+    <div class="timeline-item" style="border-left-color:#5c8cfc;">
+      <div class="meta">STEP 2</div>
+      <h4>加载已有的关系和记忆</h4>
+      <p>从 data/relationships.json 和 data/chroma/ 加载持久化数据。第一次启动为空。</p>
+    </div>
+    <div class="timeline-item" style="border-left-color:#7c5cfc;">
+      <div class="meta">STEP 3</div>
+      <h4>启动后台循环</h4>
+      <p>5个异步循环任务开始运行（生活模拟、浏览、主动消息、记忆整合、会话检测）。</p>
+    </div>
+    <div class="timeline-item" style="border-left-color:#fcd05c;">
+      <div class="meta">STEP 4</div>
+      <h4>设定初始关系（可选）</h4>
+      <p>用管理员命令 /set_role 和 /inject_memory 给她植入"前置记忆"和"已有关系"。</p>
+    </div>
+    <div class="timeline-item" style="border-left-color:#fc5c8c;">
+      <div class="meta">STEP 5</div>
+      <h4>开始正常互动</h4>
+      <p>用户发消息，或者把bot拉进群聊。关系从这里开始自然发展。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Section: Commands ============ -->
+<section id="commands">
+  <h2><span class="icon">⌨️</span> 命令手册</h2>
+  <p class="section-desc">所有管理员命令。只有 admin_user_id 对应的用户可以使用。</p>
+
+  <div style="overflow-x:auto;">
+    <table class="cmd-table">
+      <thead>
+        <tr>
+          <th>命令</th>
+          <th>参数</th>
+          <th>说明</th>
+          <th>示例</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>/status</code></td>
+          <td class="desc">无</td>
+          <td>查看系统完整状态：生活、情绪、记忆、关系概览</td>
+          <td><code>/status</code></td>
+        </tr>
+        <tr>
+          <td><code>/relationships</code></td>
+          <td class="desc">无</td>
+          <td>查看所有关系档案详情（亲密度、标签、消息数）</td>
+          <td><code>/relationships</code></td>
+        </tr>
+        <tr>
+          <td><code>/set_role</code></td>
+          <td class="desc">&lt;user_id&gt; &lt;角色&gt; &lt;亲密度&gt;</td>
+          <td>手动设定某人的关系初始值。用于引导角色认知。</td>
+          <td><code>/set_role 12345 好朋友 0.7</code></td>
+        </tr>
+        <tr>
+          <td><code>/inject_memory</code></td>
+          <td class="desc">&lt;记忆内容&gt;</td>
+          <td>注入一条"前置记忆"，让她"记得"某件事</td>
+          <td><code>/inject_memory 他上次说在学吉他</code></td>
+        </tr>
+        <tr>
+          <td><code>/allow_user</code></td>
+          <td class="desc">&lt;user_id&gt;</td>
+          <td>将某用户加入互动白名单</td>
+          <td><code>/allow_user 98765</code></td>
+        </tr>
+        <tr>
+          <td><code>/allow_group</code></td>
+          <td class="desc">[group_id]</td>
+          <td>允许某群聊互动。在群里发可省略参数。</td>
+          <td><code>/allow_group</code></td>
+        </tr>
+        <tr>
+          <td><code>/addsticker</code></td>
+          <td class="desc">&lt;mood&gt; [标签...]</td>
+          <td>回复表情包/GIF并发此命令，收录到表情包库</td>
+          <td><code>/addsticker happy 开心 庆祝</code></td>
+        </tr>
+        <tr>
+          <td><code>/browse</code></td>
+          <td class="desc">无</td>
+          <td>强制触发一次浏览（调试用）</td>
+          <td><code>/browse</code></td>
+        </tr>
+        <tr>
+          <td><code>/consolidate</code></td>
+          <td class="desc">无</td>
+          <td>强制整合所有记忆缓冲区（调试用）</td>
+          <td><code>/consolidate</code></td>
+        </tr>
+        <tr>
+          <td><code>/help</code></td>
+          <td class="desc">无</td>
+          <td>显示命令列表</td>
+          <td><code>/help</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============ Section: Scenarios ============ -->
+<section id="scenarios">
+  <h2><span class="icon">📖</span> 场景手册</h2>
+  <p class="section-desc">常见运维场景的操作指南。点击展开查看详情。</p>
+
+  <div class="scenario">
+    <div class="scenario-header">
+      <span class="num">1</span>
+      <h4>让她认识一个新朋友</h4>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="scenario-body">
+      <div class="scenario-body-inner">
+        <p style="margin-top:12px;color:var(--text2);">你想让你的朋友也能跟她聊天，从"陌生网友"开始慢慢变熟。</p>
+        <div class="code-block">
+<span class="comment"># 1. 获取朋友的 Telegram user_id（让他先私聊bot一次，在日志里看）</span>
+
+<span class="comment"># 2. 加入白名单</span>
+/allow_user 987654321
+
+<span class="comment"># 3. 可选：预设关系起点</span>
+/set_role 987654321 网友 0.3
+
+<span class="comment"># 4. 可选：注入前置记忆</span>
+/inject_memory 在一个群里认识了一个叫小明的人，他好像是做前端开发的，挺有趣的
+
+<span class="comment"># 5. 让你朋友去私聊 bot，从此自然发展</span>
+        </div>
+        <div class="alert alert-tip" style="margin-top:12px;">
+          <span class="alert-icon">💡</span>
+          <span>如果不预设，她会把这个人当<strong>完全的陌生人</strong>对待——礼貌但冷淡。预设 closeness=0.3 + 注入一段共同记忆，可以让关系有个更自然的起点。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scenario">
+    <div class="scenario-header">
+      <span class="num">2</span>
+      <h4>把她拉进一个群聊</h4>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="scenario-body">
+      <div class="scenario-body-inner">
+        <p style="margin-top:12px;color:var(--text2);">让她在群里和多个人自然互动。</p>
+        <div class="code-block">
+<span class="comment"># 1. 在 Telegram 中把 bot 拉入群聊</span>
+<span class="comment">#    确保 bot 有"读取消息"权限（关闭Privacy Mode）</span>
+<span class="comment">#    @BotFather → /mybots → 选bot → Group Privacy → Disable</span>
+
+<span class="comment"># 2. 管理员在群里发送：</span>
+/allow_group
+
+<span class="comment"># 3. 她开始"潜水"，观察群消息</span>
+<span class="comment"># 4. @她 时一定会回复</span>
+<span class="comment"># 5. 看到感兴趣的话题可能会随机冒泡</span>
+<span class="comment"># 6. 和群里她认识的人互动更频繁</span>
+        </div>
+        <div class="alert alert-warn" style="margin-top:12px;">
+          <span class="alert-icon">⚠️</span>
+          <span>重要：必须在 @BotFather 中关闭 <strong>Privacy Mode</strong>，否则 bot 在群里只能看到 @它 的消息和命令，无法实现潜水+随机参与。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scenario">
+    <div class="scenario-header">
+      <span class="num">3</span>
+      <h4>让两个AI在群里互动</h4>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="scenario-body">
+      <div class="scenario-body-inner">
+        <p style="margin-top:12px;color:var(--text2);">把你的AI和另一个AI（或别人的AI）放在同一个群里，让它们自然发展关系。</p>
+        <div class="code-block">
+<span class="comment"># 方案A：群聊互动</span>
+<span class="comment"># 1. 把两个bot都拉进同一个群</span>
+<span class="comment"># 2. 分别在群里 /allow_group</span>
+<span class="comment"># 3. 它们会各自看到对方的消息</span>
+<span class="comment"># 4. 注意：可能会陷入无限对话循环！</span>
+<span class="comment">#    建议：至少一方设置较低的群聊回复概率</span>
+
+<span class="comment"># 方案B：私聊互动（需要中转脚本）</span>
+<span class="comment"># 写一个脚本作为"中间人"：</span>
+<span class="comment">#   Bot-A 发消息 → 脚本接收 → 转发给 Bot-B</span>
+<span class="comment">#   Bot-B 回复 → 脚本接收 → 转发给 Bot-A</span>
+
+<span class="comment"># 方案C：让另一个AI主动私聊她</span>
+/allow_user &lt;other_bot_id&gt;
+<span class="comment"># 她不知道对方是AI，会自然地发展关系</span>
+<span class="comment"># 如果对方"表现不对劲"，她可能会在标签里标注</span>
+<span class="comment"># "说话有点奇怪" 或 "感觉像机器人"</span>
+        </div>
+        <div class="alert alert-info" style="margin-top:12px;">
+          <span class="alert-icon">🔁</span>
+          <span>防止无限循环的方法：在 GroupBehaviorEngine 中对 is_bot 的消息额外降低回复概率；或设置"最近5分钟内不回复同一个bot超过3次"的硬限制。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scenario">
+    <div class="scenario-header">
+      <span class="num">4</span>
+      <h4>她守住私聊的秘密</h4>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="scenario-body">
+      <div class="scenario-body-inner">
+        <p style="margin-top:12px;color:var(--text2);">用户A在私聊中告诉她一个秘密。之后在群聊中有人提到相关话题。</p>
+        <div class="code-block">
+<span class="comment"># 场景：</span>
+<span class="comment"># A 私聊跟她说："我最近偷偷在准备辞职"</span>
+<span class="comment"># → 记忆入库：source_privacy = "private"</span>
+
+<span class="comment"># 后来群里有人问："A最近怎么样了？好久没见他发言"</span>
+<span class="comment"># → 记忆检索时命中"A准备辞职"</span>
+<span class="comment"># → 但 source_privacy = "private" + 当前 context = "group"</span>
+<span class="comment"># → 被分类为 private_hints（知道但不说）</span>
+
+<span class="comment"># prompt 中：</span>
+<span class="string">"⚠️ 你从私聊中知道的（不要在群里直接说出来，但可以影响你的态度）：</span>
+<span class="string"> A好像在准备辞职"</span>
+
+<span class="comment"># 她的回复可能是：</span>
+<span class="string">"我也不太清楚诶，你问他本人呀"</span>
+<span class="comment"># 或</span>
+<span class="string">"应该还好吧？可能最近比较忙"</span>
+<span class="comment"># 而不是："他要辞职了"</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scenario">
+    <div class="scenario-header">
+      <span class="num">5</span>
+      <h4>给她植入"前世记忆"</h4>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="scenario-body">
+      <div class="scenario-body-inner">
+        <p style="margin-top:12px;color:var(--text2);">你想让她"记得"一段从未发生的历史——比如你们是老朋友，之前一起旅行过。</p>
+        <div class="code-block">
+<span class="comment"># 1. 设定关系</span>
+/set_role 12345 好朋友 0.75
+
+<span class="comment"># 2. 注入核心记忆（多条）</span>
+/inject_memory 去年夏天和他一起去了厦门旅行，在鼓浪屿吃了好多海鲜
+/inject_memory 他养了一只叫"年糕"的橘猫，总是偷吃东西
+/inject_memory 他以前帮我修过电脑，结果越修越坏，笑死了
+/inject_memory 他最近在学吉他，弹得不太好但很认真
+/inject_memory 我们有个约定，等他学会《晴天》了请我吃饭
+
+<span class="comment"># 3. 开始聊天时，她会自然地"记得"这些</span>
+<span class="comment"># 但因为记忆的 confidence 会衰减，</span>
+<span class="comment"># 久了之后有些细节可能变模糊——就像真人一样</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scenario">
+    <div class="scenario-header">
+      <span class="num">6</span>
+      <h4>调整她的性格/状态</h4>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="scenario-body">
+      <div class="scenario-body-inner">
+        <p style="margin-top:12px;color:var(--text2);">想让她今天心情特别好、或者让她变得更内向。</p>
+        <div class="code-block">
+<span class="comment"># 性格调整：修改 config.yaml 中的 persona.personality</span>
+<span class="comment"># 然后重启（性格是静态配置，不会运行时改变）</span>
+
+<span class="comment"># 情绪调整（运行时）：</span>
+<span class="comment"># 目前没有直接命令，但可以通过以下方式间接影响：</span>
+<span class="comment">#   1. 在私聊中发正面/负面消息 → 触发情绪变化</span>
+<span class="comment">#   2. 修改 emotion_engine.py 的初始值</span>
+<span class="comment">#   3. 添加 /set_mood 命令（自行扩展）</span>
+
+<span class="comment"># 扩展示例：添加 /set_mood 命令</span>
+<span class="comment"># 在 bot.py 中添加处理函数：</span>
+<span class="keyword">async def</span> _cmd_set_mood(self, update, context):
+    valence = <span class="keyword">float</span>(context.args[<span class="number">0</span>])  <span class="comment"># -1 ~ 1</span>
+    arousal = <span class="keyword">float</span>(context.args[<span class="number">1</span>])  <span class="comment"># 0 ~ 1</span>
+    self.orch.emotion.valence = valence
+    self.orch.emotion.arousal = arousal
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scenario">
+    <div class="scenario-header">
+      <span class="num">7</span>
+      <h4>多窗口并行对话</h4>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="scenario-body">
+      <div class="scenario-body-inner">
+        <p style="margin-top:12px;color:var(--text2);">她同时在和多个人聊天（就像你的微信一样多窗口切换）。</p>
+        <div class="code-block">
+<span class="comment"># 系统天然支持。每条消息独立处理。</span>
+
+<span class="comment"># 并行场景：</span>
+<span class="comment"># 10:00 - 你私聊她："今天天气真好"</span>
+<span class="comment"># 10:01 - 同事在群里发了个工作问题</span>
+<span class="comment"># 10:01 - AI-B 私聊她："你在吗"</span>
+
+<span class="comment"># 她的处理：</span>
+<span class="comment"># → 收到你的消息 → 使用「你的关系档案」→ 亲近语气回复</span>
+<span class="comment"># → 收到群消息 → GroupBehavior判断 → 可能回/不回</span>
+<span class="comment"># → 收到AI-B → 使用「AI-B的关系档案」→ 友好但有距离</span>
+
+<span class="comment"># 每个窗口的上下文是独立的：</span>
+<span class="comment"># ChatContextManager 为每个 chat_id 维护独立的 message_history</span>
+<span class="comment"># 她不会把群里的话题带到你的私聊里（除非自然想到）</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Section: FAQ ============ -->
+<section id="faq">
+  <h2><span class="icon">❓</span> 常见问题</h2>
+
+  <div class="scenario">
+    <div class="scenario-header">
+      <h4>Q: 她在群里会不会说太多/太少？</h4>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="scenario-body">
+      <div class="scenario-body-inner">
+        <p style="margin-top:12px;color:var(--text2);">GroupBehaviorEngine 控制回复概率。你可以通过调整 persona.personality.extraversion 来改变她在群里的活跃度。外向值0.8的她会比0.3的她在群里发言多很多。你也可以直接修改 should_respond() 中的概率公式。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="scenario">
+    <div class="scenario-header">
+      <h4>Q: 两个AI聊天会不会无限循环？</h4>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="scenario-body">
+      <div class="scenario-body-inner">
+        <p style="margin-top:12px;color:var(--text2);">会的。建议在群聊场景中添加anti-loop机制：检测到对方是bot时降低回复概率（如×0.3）、限制每5分钟最多回复同一bot 2次、或者在回复之间加入更长的随机延迟。在 handle_message 中可以通过 Telegram 的 is_bot 字段判断。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="scenario">
+    <div class="scenario-header">
+      <h4>Q: LLM 费用大概多少？</h4>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="scenario-body">
+      <div class="scenario-body-inner">
+        <p style="margin-top:12px;color:var(--text2);">每次回复调用1次 expression LLM（prompt约2000 token + 回复约200 token）。如果使用 GPT-4o-mini，大约 $0.001/次。关系深度反思（每20次对话1次）和记忆整合（每6小时1次）各额外调用1次 utility LLM。日常聊天量约100条/天的话，月费用大约 $3-5（GPT-4o-mini）或 $15-25（GPT-4o）。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="scenario">
+    <div class="scenario-header">
+      <h4>Q: 记忆数据库会不会越来越大？</h4>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="scenario-body">
+      <div class="scenario-body-inner">
+        <p style="margin-top:12px;color:var(--text2);">forget_and_distort() 会定期清理低权重记忆（accuracy < 0.15 的自动删除）。情感权重高的记忆保留更久（就像人对情感强烈的事印象更深）。实际使用中，大约每3个月会稳定在 2000-5000 条记忆左右。如果需要更激进的清理，可以调低遗忘系数。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="scenario">
+    <div class="scenario-header">
+      <h4>Q: 可以不用 Telegram，换成其他平台吗？</h4>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="scenario-body">
+      <div class="scenario-body-inner">
+        <p style="margin-top:12px;color:var(--text2);">可以。Orchestrator 是平台无关的。bot.py 只是 Telegram 的适配层。你可以写一个 discord_bot.py、wechat_bot.py、或者 web_api.py，只要调用 orchestrator.handle_message() 并传入正确的参数即可。核心的关系/记忆/情绪系统完全不依赖 Telegram。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="scenario">
+    <div class="scenario-header">
+      <h4>Q: 她知道自己是AI吗？</h4>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="scenario-body">
+      <div class="scenario-body-inner">
+        <p style="margin-top:12px;color:var(--text2);">在prompt中明确指示"不要说作为AI"。但这不是万无一失的——如果用户直接问"你是AI吗"，LLM 可能会出戏。建议在 persona 设定中加入对这种问题的预设反应（比如"开玩笑的吧？""你说呢？"等回避策略）。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<!-- Module Info Panel -->
+<div class="module-info-panel" id="modInfoPanel">
+  <button class="close-btn" onclick="closeModInfo()">✕</button>
+  <h4 id="modInfoTitle"></h4>
+  <p id="modInfoDesc"></p>
+  <div class="connections" id="modInfoConn"></div>
+</div>
+
+<footer>
+  <p>Virtual Persona System v2.0 — Multi-Relationship Architecture</p>
+  <p style="margin-top:4px;opacity:0.5;">单一个体 · 多重关系 · 真实社交模拟</p>
+</footer>
+
+<script>
+// Tab switching
+function switchTab(e, tabId) {
+  const parent = e.target.closest('section') || document;
+  parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  parent.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  e.target.classList.add('active');
+  document.getElementById(tabId).classList.add('active');
+}
+document.querySelectorAll('.scenario').forEach(item => {
+    item.style.cursor = 'pointer'; // 确保鼠标悬停显示手型
+    item.addEventListener('click', function(e) {
+        // 切换 open 类
+        this.classList.toggle('open');
+        
+        // 可选：点击一个时关闭其他已展开的项（手风琴效果）
+        document.querySelectorAll('.scenario').forEach(other => {
+            if (other !== this) other.classList.remove('open');
+        });
+    });
+});
+
+
+
+// Nav highlighting
+const sections = document.querySelectorAll('section');
+const navLinks = document.querySelectorAll('nav a');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => {
+    if (window.scrollY >= s.offsetTop - 120) current = s.id;
+  });
+  navLinks.forEach(a => {
+    a.classList.remove('active');
+    if (a.getAttribute('href') === '#' + current) a.classList.add('active');
+  });
+});
+
+// Module info panel
+const modData = {
+  orchestrator: {
+    title: "🎭 Orchestrator 中枢协调器",
+    desc: "整个系统的大脑。接收外部消息后，协调关系查询、记忆检索、情绪评估、群聊决策、表达生成等所有流程。同时管理5个后台循环任务。",
+    connections: [
+      "↔ RelationshipManager：查询/更新关系",
+      "↔ MemoryHub：读写记忆",
+      "↔ EmotionEngine：获取情绪状态",
+      "↔ LifeSimulator：获取生活状态",
+      "→ ExpressionSynthesizer：生成回复",
+      "→ GroupBehaviorEngine：群聊决策",
+      "↔ ChatContextManager：管理对话流",
+      "← Bot/API：接收外部消息",
+    ]
+  },
+  life: {
+    title: "🌙 LifeSimulator 生活模拟",
+    desc: "模拟24小时日常生活循环。包括作息（几点起床/睡觉）、位置（家/公司/通勤）、体力（体力值影响回复速度）、饥饿度等。她不会在凌晨3点精神满满地秒回你。",
+    connections: [
+      "→ Orchestrator：提供当前状态",
+      "→ Expression：影响回复内容（'我在上班'）",
+      "→ ProactiveEngine：影响主动消息时机",
+      "← EventBus：接收时间触发事件",
+    ]
+  },
+  emotion: {
+    title: "💛 EmotionEngine 情绪引擎",
+    desc: "PAD情绪模型：Pleasure(愉悦度)、Arousal(激活度)、Dominance(支配度)。加上依恋系统（长时间不联系会想念）。情绪有自然衰减，会被用户消息、浏览内容、生活事件影响。",
+    connections: [
+      "→ Expression：决定语气/回复速度/emoji频率",
+      "→ GroupBehavior：影响群聊参与概率",
+      "→ ProactiveEngine：情绪触发主动消息",
+      "← EventBus：接收各类情绪刺激",
+    ]
+  },
+  relationship: {
+    title: "👥 RelationshipManager 关系系统",
+    desc: "为每个用户维护独立的关系档案。包含7个关系维度（亲密/信任/尊重/舒适/好感/依赖/烦感）、主观标签、常聊话题、inside jokes、雷区等。每20次对话触发LLM深度反思。",
+    connections: [
+      "↔ Orchestrator：查询/更新",
+      "→ Expression：提供关系上下文",
+      "→ GroupBehavior：亲密度影响回复概率",
+      "→ ProactiveEngine：选择主动消息目标",
+      "→ LLM：深度反思",
+    ]
+  },
+  memory: {
+    title: "🧠 MemoryHub 记忆中枢",
+    desc: "三层记忆架构：情节记忆（发生了什么事）、语义记忆（客观事实）、情感印记（感受）。所有记忆带隐私标记（private/public）。支持自然遗忘和记忆扭曲。使用ChromaDB向量数据库。",
+    connections: [
+      "↔ Orchestrator：读写",
+      "→ Expression：提供记忆上下文",
+      "← ChatContextManager：对话结束时整合",
+      "→ LLM：记忆提取和整合",
+    ]
+  },
+  chatctx: {
+    title: "💭 ChatContextManager 上下文管理",
+    desc: "为每个聊天窗口（私聊/群聊）维护独立的对话流。包括最近30条消息历史、会话活跃状态、群成员列表。30分钟无互动视为会话结束，触发记忆整合。",
+    connections: [
+      "↔ Orchestrator：管理对话流",
+      "→ Expression：提供近期对话上下文",
+      "→ MemoryHub：会话结束时触发整合",
+      "→ GroupBehavior：提供群消息历史",
+    ]
+  },
+  groupbeh: {
+    title: "🎯 GroupBehaviorEngine 群聊行为",
+    desc: "决定她在群里要不要回、怎么回。综合考虑：是否被@、发送者亲密度、话题兴趣匹配、性格外向性、情绪状态、连续沉默时长、防刷屏等因素。输出回复概率和回复模式。",
+    connections: [
+      "← Orchestrator：接收群消息",
+      "← RelationshipManager：查询发送者亲密度",
+      "← EmotionEngine：获取情绪状态",
+      "→ Orchestrator：返回决策结果",
+    ]
+  },
+  expression: {
+    title: "✍️ ExpressionSynthesizer 表达合成",
+    desc: "系统的最终输出层。综合所有上下文（情绪、关系、记忆、生活状态、浏览内容）构建prompt，调用LLM生成回复。然后后处理：分段、延迟计算、注入错别字、选择表情包。群聊模式下自动克制。",
+    connections: [
+      "← Orchestrator：触发生成",
+      "← EmotionEngine：情绪风格",
+      "← RelationshipManager：关系上下文",
+      "← MemoryHub：相关记忆",
+      "← LifeSimulator：生活状态",
+      "← BrowserAgent：浏览内容",
+      "← StickerEngine：表情包选择",
+      "→ LLM：prompt → 回复",
+    ]
+  },
+  browser: {
+    title: "📱 BrowserAgent 浏览代理",
+    desc: "模拟刷手机行为。定时抓取RSS源、热搜等内容。根据persona的兴趣过滤和评价内容。浏览到的东西可能在聊天中自然提起（但不会强行安利）。也会影响情绪。",
+    connections: [
+      "→ EventBus：浏览内容影响情绪",
+      "→ Expression：提供聊天素材",
+      "→ ProactiveEngine：有趣内容触发分享",
+      "← LifeSimulator：判断是否适合刷手机",
+    ]
+  },
+  sticker: {
+    title: "😸 StickerEngine 表情包引擎",
+    desc: "管理表情包库。每个表情包有mood、tags、使用次数等属性。根据当前情绪和对话内容选择最合适的表情包。是她人格化表达的重要组成部分。",
+    connections: [
+      "← Expression：请求选择表情包",
+      "← EmotionEngine：当前情绪",
+      "← 管理员：/addsticker 添加",
+    ]
+  },
+  proactive: {
+    title: "💬 ProactiveEngine 主动消息引擎",
+    desc: "评估是否应该主动发消息。触发条件：看到有趣内容想分享、依恋度高且久未联系、到了特定时间点（早安/晚安）、情绪需要倾诉等。",
+    connections: [
+      "← EmotionEngine：情绪触发",
+      "← LifeSimulator：时间触发",
+      "← BrowserAgent：内容分享触发",
+      "← RelationshipManager：选择发送目标",
+      "→ Expression：生成主动消息",
+    ]
+  },
+  eventbus: {
+    title: "🔌 EventBus 事件总线",
+    desc: "发布/订阅模式的事件分发中心。所有模块间的异步通信都通过EventBus。事件类型包括：user.message、emotion.change、life.tick、browse.found 等。解耦模块依赖。",
+    connections: [
+      "↔ 所有模块：发布和订阅事件",
+    ]
+  },
+};
+
+function showModInfo(modId) {
+  const data = modData[modId];
+  if (!data) return;
+  document.getElementById('modInfoTitle').textContent = data.title;
+  document.getElementById('modInfoDesc').textContent = data.desc;
+  const connEl = document.getElementById('modInfoConn');
+  connEl.innerHTML = '<div style="color:#7c5cfc;font-size:11px;font-weight:600;margin-bottom:6px;">数据连接：</div>';
+  data.connections.forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'conn-item';
+    div.textContent = c;
+    connEl.appendChild(div);
+  });
+  document.getElementById('modInfoPanel').classList.add('show');
+}
+
+function closeModInfo() {
+  document.getElementById('modInfoPanel').classList.remove('show');
+}
+
+// SVG module hover
+document.querySelectorAll('.mod').forEach(el => {
+  el.style.cursor = 'pointer';
+  el.addEventListener('mouseenter', () => {
+    el.style.filter = 'brightness(1.3)';
+  });
+  el.addEventListener('mouseleave', () => {
+    el.style.filter = '';
+  });
+  el.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const modId = el.getAttribute('data-mod');
+    if (modId && modData[modId]) showModInfo(modId);
+  });
+});
+
+// Click outside to close panel
+document.addEventListener('click', (e) => {
+  const panel = document.getElementById('modInfoPanel');
+  if (panel.classList.contains('show') && !panel.contains(e.target)) {
+    // Don't close if clicking on SVG modules
+    if (!e.target.closest('.mod')) {
+      closeModInfo();
+    }
+  }
+});
+
+// Smooth scroll
+document.querySelectorAll('nav a').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) target.scrollIntoView({behavior:'smooth', block:'start'});
+  });
+});
+
+// Animate stat bars on scroll
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.querySelectorAll('.bar-fill').forEach(bar => {
+        const w = bar.style.width;
+        bar.style.width = '0%';
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            bar.style.width = w;
+          });
+        });
+      });
+    }
+  });
+}, {threshold: 0.3});
+document.querySelectorAll('.rel-card, .card-grid').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>
