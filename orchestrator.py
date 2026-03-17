@@ -1,0 +1,263 @@
+"""
+增强版协调器 —— 管理多聊天窗口、统一调度
+"""
+import asyncio
+import logging
+from datetime import datetime
+from typing import Dict, Callable, Optional
+
+from llm import LLMClient
+from event_bus import EventBus
+from life_simulator import LifeSimulator
+from emotion_engine import EmotionEngine
+from memory_hub import MemoryHub
+from sticker_engine import StickerEngine
+from browser_agent import BrowserAgent
+from proactive_engine import ProactiveEngine
+from relationship import RelationshipManager
+from chat_context import ChatContextManager
+from group_behavior import GroupBehaviorEngine
+from expression import ExpressionSynthesizer
+
+logger = logging.getLogger(__name__)
+
+
+class Orchestrator:
+    def __init__(self, config: dict):
+        self.config = config
+        self.persona = config["persona"]
+        self.running = False
+
+        # 基础设施
+        self.bus = EventBus()
+        self.llm = LLMClient(config["llm"])
+
+        # ---- 全局单例 Agent（她只有一个自我）----
+        self.life_sim = LifeSimulator(self.persona, self.llm, self.bus)
+        self.emotion = EmotionEngine(self.persona, self.bus)
+        self.browser = BrowserAgent(
+            self.persona, self.llm, self.bus,
+            feeds_config=config.get("feeds", []),
+        )
+        self.stickers = StickerEngine(self.persona, self.llm)
+
+        # ---- 关系层（每个人独立档案）----
+        self.relationships = RelationshipManager(self.persona, self.llm, self.bus)
+
+        # ---- 上下文层（每个聊天窗口独立）----
+        self.chat_ctx = ChatContextManager(self.persona["name"])
+
+        # ---- 记忆（全局共享但带隐私标记）----
+        self.memory = MemoryHub(self.persona, self.llm, self.bus)
+
+        # ---- 群聊行为 ----
+        self.group_behavior = GroupBehaviorEngine(
+            self.persona, self.llm, self.relationships
+        )
+
+        # ---- 主动引擎（需要知道目标用户列表）----
+        self.proactive = ProactiveEngine(self.persona, self.bus)
+
+        # ---- 表达层 ----
+        self.expression = ExpressionSynthesizer(
+            self.persona, self.llm, self.memory, self.emotion,
+            self.life_sim, self.stickers, self.browser,
+            self.relationships, self.chat_ctx,
+        )
+
+        # 主动消息回调: chat_id → callback
+        self.proactive_callbacks: Dict[int, Callable] = {}
+
+    def set_proactive_callback(self, chat_id: int, callback: Callable):
+        self.proactive_callbacks[chat_id] = callback
+
+    async def handle_message(
+        self,
+        text: str,
+        user_id: int,
+        user_name: str,
+        chat_id: int,
+        chat_type: str = "private",
+        group_title: str = "",
+        mentioned_me: bool = False,
+    ) -> Optional[list]:
+        """
+        处理任意来源的消息。
+        返回消息列表 或 None（群聊中决定不回复时）。
+        """
+        # 1. 更新关系档案
+        rel_prof = self.relationships.get_or_create(user_id, user_name)
+
+        # 2. 更新聊天窗口
+        window = self.chat_ctx.get_or_create(chat_id, chat_type, group_title)
+        self.chat_ctx.add_message(
+            chat_id, user_id, user_name, text,
+            is_me=False, mentioned_me=mentioned_me,
+        )
+
+        # 3. 记入记忆缓冲
+        self.memory.add_message(
+            chat_id, "user", text,
+            user_id=user_id, user_name=user_name,
+            context_type="group" if chat_type in ("group", "supergroup") else "private",
+        )
+
+        # 4. 通知情绪系统
+        await self.bus.emit("user.message", {"text": text, "user_id": user_id})
+        self.proactive.update_last_message_time(datetime.now())
+
+        # 5. 群聊行为决策
+        reply_mode = "direct"
+        if chat_type in ("group", "supergroup"):
+            decision = await self.group_behavior.should_respond(
+                chat_window=window,
+                sender_id=user_id,
+                message_text=text,
+                mentioned_me=mentioned_me,
+                emotion_state=self.emotion.get_status(),
+            )
+            if not decision["should_reply"]:
+                logger.debug(f"[Orchestrator] 群聊中选择不回复 (prob={decision['probability']})")
+                return None
+            reply_mode = decision["reply_mode"]
+
+        # 6. 生成回复
+        messages = await self.expression.compose_reply(
+            user_message=text,
+            user_id=user_id,
+            chat_id=chat_id,
+            chat_type=chat_type,
+            reply_mode=reply_mode,
+        )
+
+        # 7. 记录自己的回复
+        for msg in messages:
+            if msg["type"] == "text":
+                self.memory.add_message(
+                    chat_id, "assistant", msg["content"],
+                    context_type="group" if chat_type in ("group", "supergroup") else "private",
+                )
+                self.chat_ctx.add_message(
+                    chat_id, 0, self.persona["name"],
+                    msg["content"], is_me=True,
+                )
+
+        # 8. 更新关系
+        # 简单情感分析（后续可以用更精细的）
+        sentiment = 0.1  # 默认微正
+        await self.relationships.update_after_conversation(user_id, text, sentiment)
+
+        return messages
+
+    async def handle_proactive_trigger(self):
+        """检查是否应该主动发消息"""
+        trigger = self.proactive.evaluate(
+            emotion_state=self.emotion.get_status(),
+            life_status=self.life_sim.get_status(),
+            memory_status=self.memory.get_status(),
+        )
+        if not trigger:
+            return
+
+        # 选择发给谁：按亲密度排序选最亲近的
+        all_rels = self.relationships.list_all()
+        if not all_rels:
+            return
+
+        # 选最亲近的那个人（可以扩展为更复杂的逻辑）
+        target = all_rels[0]
+        target_chat_id = target["user_id"]  # 私聊 chat_id 通常等于 user_id
+
+        callback = self.proactive_callbacks.get(target_chat_id)
+        if not callback:
+            # 如果没有注册回调，尝试直接用 user_id
+            callback = self.proactive_callbacks.get(target["user_id"])
+        if not callback:
+            return
+
+        messages = await self.expression.compose_proactive(
+            trigger, chat_id=target_chat_id, user_id=target["user_id"],
+        )
+
+        for msg in messages:
+            if msg["type"] == "text":
+                self.memory.add_message(
+                    target_chat_id, "assistant", msg["content"],
+                    context_type="private",
+                )
+
+        await callback(messages)
+
+    # ========== 后台循环 ==========
+
+    async def _life_tick_loop(self):
+        interval = self.config.get("system", {}).get("life_tick_seconds", 900)
+        while self.running:
+            try:
+                await self.life_sim.tick()
+                self.emotion.passive_decay()
+            except Exception as e:
+                logger.error(f"Life tick error: {e}", exc_info=True)
+            await asyncio.sleep(interval)
+
+    async def _browse_loop(self):
+        interval = self.config.get("system", {}).get("browse_interval_seconds", 3600)
+        while self.running:
+            try:
+                life_status = self.life_sim.get_status()
+                if await self.browser.should_browse(life_status):
+                    await self.browser.browse()
+            except Exception as e:
+                logger.error(f"Browse error: {e}", exc_info=True)
+            await asyncio.sleep(interval)
+
+    async def _proactive_loop(self):
+        interval = self.config.get("system", {}).get("proactive_check_seconds", 300)
+        while self.running:
+            try:
+                await self.handle_proactive_trigger()
+            except Exception as e:
+                logger.error(f"Proactive error: {e}", exc_info=True)
+            await asyncio.sleep(interval)
+
+    async def _memory_loop(self):
+        hours = self.config.get("system", {}).get("memory_consolidation_hours", 6)
+        interval = hours * 3600
+        while self.running:
+            await asyncio.sleep(interval)
+            try:
+                await self.memory.consolidate()
+                await self.memory.forget_and_distort()
+            except Exception as e:
+                logger.error(f"Memory error: {e}", exc_info=True)
+
+    async def _conversation_end_check_loop(self):
+        """定期检查是否有会话结束，触发记忆整合"""
+        while self.running:
+            for chat_id in list(self.chat_ctx.windows.keys()):
+                if self.chat_ctx.check_conversation_ended(chat_id):
+                    await self.memory.consolidate(chat_id)
+            await asyncio.sleep(120)
+
+    async def start_background_tasks(self):
+        self.running = True
+        asyncio.create_task(self._life_tick_loop())
+        asyncio.create_task(self._browse_loop())
+        asyncio.create_task(self._proactive_loop())
+        asyncio.create_task(self._memory_loop())
+        asyncio.create_task(self._conversation_end_check_loop())
+        logger.info("[Orchestrator] 后台任务已启动")
+
+    async def stop(self):
+        self.running = False
+        await self.memory.consolidate()
+
+    def get_full_status(self):
+        return {
+            "life": self.life_sim.get_status(),
+            "emotion": self.emotion.get_status(),
+            "memory": self.memory.get_status(),
+            "browser": self.browser.get_status(),
+            "relationships": self.relationships.list_all(),
+            "active_chats": len(self.chat_ctx.windows),
+        }
