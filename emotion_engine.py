@@ -33,6 +33,7 @@ class EmotionEngine:
         self.bus = event_bus
         self.state = EmotionState()
         self.neuroticism = persona["personality"]["neuroticism"]
+        self.daily_baseline: float = 0.0
 
         # 订阅事件
         self.bus.subscribe("life.tick", self._on_life_tick)
@@ -82,9 +83,13 @@ class EmotionEngine:
         """对话情感分析后的影响。sentiment: -1~+1"""
         self._apply_impact(sentiment * 0.3, abs(sentiment) * 0.2)
 
+    def set_daily_baseline(self, value: float):
+        """由 InnerStateManager 在每天起床时调用一次，设定当日情绪地板。"""
+        self.daily_baseline = max(-1.0, min(1.0, value))
+
     def passive_decay(self):
-        """自然回归中性（每tick调用）"""
-        self.state.valence *= 0.98
+        """自然回归基线（每tick调用）"""
+        self.state.valence = self.daily_baseline + (self.state.valence - self.daily_baseline) * 0.98
         self.state.arousal *= 0.95
         self.state.irritability *= 0.97
         self.state.clamp()
