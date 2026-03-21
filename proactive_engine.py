@@ -21,6 +21,7 @@ class ProactiveEngine:
         # 订阅事件
         self.bus.subscribe("life.notable_event", self._on_notable_event)
         self.bus.subscribe("browser.found_interesting", self._on_interesting_content)
+        self.bus.subscribe("inner_state.updated", self._on_inner_state_updated)
 
         self.last_proactive_time: Optional[datetime] = None
         self.last_message_time: Optional[datetime] = None  # 来自用户的
@@ -43,6 +44,25 @@ class ProactiveEngine:
             "source": "browser",
             "time": datetime.now(),
         })
+
+    async def _on_inner_state_updated(self, event):
+        """将 pending_thoughts 中有明确对象的条目转为 follow_up 触发器（去重）"""
+        existing_contents = {
+            t["content"] for t in self.pending_triggers if t.get("type") == "follow_up"
+        }
+        for thought in event.data.get("pending_thoughts", []):
+            if thought.get("target_user_id", 0) > 0:
+                content = thought.get("content", "")
+                if content and content not in existing_contents:
+                    self.pending_triggers.append({
+                        "type": "follow_up",
+                        "urgency": thought.get("urgency", 0.5),
+                        "content": content,
+                        "target_user_id": thought["target_user_id"],
+                        "source": "inner_state",
+                        "time": datetime.now(),
+                    })
+                    existing_contents.add(content)
 
     def evaluate(
         self,
