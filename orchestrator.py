@@ -170,9 +170,6 @@ class Orchestrator:
 
         callback = self.proactive_callbacks.get(target_chat_id)
         if not callback:
-            # 如果没有注册回调，尝试直接用 user_id
-            callback = self.proactive_callbacks.get(target["user_id"])
-        if not callback:
             return
 
         messages = await self.expression.compose_proactive(

@@ -79,8 +79,13 @@ class LifeSimulator:
         # 到了深夜，判断是否该睡
         sleep_range = self.persona.get("daily_patterns", {}).get("sleep", [23, 25])
         sleep_hour = sleep_range[0] + random.uniform(0, sleep_range[1] - sleep_range[0])
-        if (hour >= sleep_hour or hour < 5) and not self.is_sleeping:
-            if self.physical.energy < 30 or hour >= sleep_hour:
+        # sleep_hour 可能超过 24（如 25 表示次日凌晨 1 点），需要折算
+        if sleep_hour >= 24:
+            should_sleep = hour >= 23 or hour < (sleep_hour - 24)
+        else:
+            should_sleep = hour >= sleep_hour or hour < 5
+        if should_sleep and not self.is_sleeping:
+            if self.physical.energy < 30 or should_sleep:
                 self.is_sleeping = True
                 self.woke_up_today = False
                 self.current_action = "睡觉"
@@ -128,8 +133,10 @@ notable=true表示这件事她可能想跟朋友说。shareable_thought是她想
         self.location = result.get("location", self.location)
         self.physical.energy += result.get("energy_change", -2)
 
-        if result.get("notable", False) and result.get("shareable_thought"):
-            self.physical.hunger -= 20 if "吃" in self.current_action else 0
+        # 饥饿感：根据当前行为独立更新，与 notable 无关
+        eating_keywords = ["吃", "外卖", "午饭", "晚饭", "早饭", "餐"]
+        if any(kw in self.current_action for kw in eating_keywords):
+            self.physical.hunger -= 20
         else:
             self.physical.hunger += 3  # 随时间变饿
 

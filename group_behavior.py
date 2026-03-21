@@ -103,10 +103,10 @@ class GroupBehaviorEngine:
 
         # 连续沉默太久，概率升高（不能一直潜水）
         silence = chat_window.consecutive_silence
-        if silence > 15:
-            base_prob += 0.1
-        elif silence > 30:
+        if silence > 30:
             base_prob += 0.2
+        elif silence > 15:
+            base_prob += 0.1
 
         # 刚说过话不久，概率降低（避免刷屏）
         if chat_window.my_last_message_time:

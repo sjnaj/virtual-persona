@@ -9,7 +9,7 @@ import logging
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict
 
-import chromadb
+import vector_store as chromadb
 
 logger = logging.getLogger(__name__)
 
@@ -243,3 +243,4 @@ source_privacy说明：
             "active_chats": len(self.buffers),
             "last_message_time": self.last_message_time.isoformat() if self.last_message_time else None,
         }
+    

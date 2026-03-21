@@ -49,7 +49,7 @@ def setup_logging(log_dir: str = "log"):
 
 def main():
     setup_logging()
-    with open("config.yaml", "r", encoding="utf-8") as f:
+    with open("config.local.yaml", "r", encoding="utf-8") as f:
         config = yaml.safe_load(f)
     
     orchestrator = Orchestrator(config)

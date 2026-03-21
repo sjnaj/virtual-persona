@@ -5,11 +5,14 @@ log/*.log
 __pycache__/
 *.pyc
 *.pyo
-
+.claude
 # Data (ChromaDB, relationships)
 data/chroma/
 data/relationships.json
-
+test
+log
 # Env / secrets
 .env
 config.local.yaml
+CLAUDE.md
+

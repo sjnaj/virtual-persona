@@ -7,14 +7,28 @@ import random
 import logging
 from datetime import datetime
 
-from telegram import Update
+from telegram import Update, BotCommand, BotCommandScopeDefault, BotCommandScopeChat
 from telegram.ext import (
     Application, CommandHandler, MessageHandler,
     ContextTypes, filters,
 )
 from telegram.constants import ChatAction
+from telegram.error import TimedOut, NetworkError
 
 logger = logging.getLogger(__name__)
+
+
+def _retry_on_timeout(func):
+    """命令处理器超时时等 2 秒后重试一次"""
+    async def wrapper(*args, **kwargs):
+        try:
+            return await func(*args, **kwargs)
+        except (TimedOut, NetworkError):
+            logger.warning(f"[Bot] {func.__name__} 超时，2 秒后重试...")
+            await asyncio.sleep(2)
+            return await func(*args, **kwargs)
+    wrapper.__name__ = func.__name__
+    return wrapper
 
 
 class VirtualPersonaBot:
@@ -23,6 +37,7 @@ class VirtualPersonaBot:
         self.admin_user_id = tg_config["admin_user_id"]
         self.bot_token = tg_config["bot_token"]
         self.bot_username: str = ""  # 启动后填入
+        self.bot_id: int = 0        # 启动后填入，避免每次消息都请求 API
 
         # 白名单：允许互动的用户/群（留空=允许所有）
         self.allowed_users: set = set(tg_config.get("allowed_users", []))
@@ -77,7 +92,7 @@ class VirtualPersonaBot:
         # 检查是否被回复
         if update.message.reply_to_message:
             if update.message.reply_to_message.from_user:
-                if update.message.reply_to_message.from_user.id == (await context.bot.get_me()).id:
+                if update.message.reply_to_message.from_user.id == self.bot_id:
                     mentioned_me = True
 
         # 群聊信息
@@ -122,23 +137,66 @@ class VirtualPersonaBot:
             delay = msg.get("delay", 1)
             await asyncio.sleep(min(delay, 120))
 
-            try:
-                if msg["type"] == "text":
-                    await bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
-                    typing_time = len(msg["content"]) * random.uniform(0.06, 0.1)
-                    await asyncio.sleep(min(typing_time, 6))
-                    await bot.send_message(
-                        chat_id=chat_id,
-                        text=msg["content"],
-                        reply_to_message_id=reply_to if i == 0 else None,
-                    )
-                elif msg["type"] == "sticker":
-                    await bot.send_sticker(chat_id=chat_id, sticker=msg["file_id"])
-            except Exception as e:
-                logger.error(f"Send message error: {e}")
+            for attempt in range(2):
+                try:
+                    if msg["type"] == "text":
+                        await bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
+                        typing_time = len(msg["content"]) * random.uniform(0.06, 0.1)
+                        await asyncio.sleep(min(typing_time, 6))
+                        await bot.send_message(
+                            chat_id=chat_id,
+                            text=msg["content"],
+                            reply_to_message_id=reply_to if i == 0 else None,
+                        )
+                    elif msg["type"] == "sticker":
+                        await bot.send_sticker(chat_id=chat_id, sticker=msg["file_id"])
+                    break  # 成功，跳出重试
+                except (TimedOut, NetworkError):
+                    if attempt == 0:
+                        logger.warning("[Bot] 发送超时，2 秒后重试...")
+                        await asyncio.sleep(2)
+                    else:
+                        logger.error("[Bot] 发送超时，重试仍失败，跳过")
+                except Exception as e:
+                    logger.error(f"Send message error: {e}")
+                    break
+
+    # ========== 命令处理 ==========
+
+    @_retry_on_timeout
+    async def _cmd_start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """开场白，对管理员额外显示命令列表"""
+        user_id = update.effective_user.id
+        persona_name = self.orch.persona.get("name", "我")
+        persona = self.orch.persona
+
+        welcome = (
+            f"哦？你找我啊～ 我是{persona_name}，"
+            f"{persona.get('occupation', '一个普通女生')}😊\n"
+            f"养了只橘猫叫年糕，有什么想聊的随时找我~"
+        )
+
+        if user_id == self.admin_user_id:
+            admin_help = (
+                "\n\n🔧 管理员命令：\n"
+                "/status - 系统状态\n"
+                "/relationships - 关系列表\n"
+                "/set_role <uid> <角色> <亲密度> - 设定关系\n"
+                "/inject_memory <内容> - 注入记忆\n"
+                "/allow_user <uid> - 允许用户互动\n"
+                "/allow_group [gid] - 允许群互动\n"
+                "/addsticker <mood> <tags> - 添加表情包\n"
+                "/browse - 强制浏览\n"
+                "/consolidate - 强制整合记忆\n"
+                "/help - 再次查看此列表"
+            )
+            await update.message.reply_text(welcome + admin_help)
+        else:
+            await update.message.reply_text(welcome)
 
     # ========== 管理员命令 ==========
 
+    @_retry_on_timeout
     async def _cmd_status(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if update.effective_user.id != self.admin_user_id:
             return
@@ -164,6 +222,7 @@ class VirtualPersonaBot:
         )
         await update.message.reply_text(text)
 
+    @_retry_on_timeout
     async def _cmd_relationships(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """查看所有关系详情"""
         if update.effective_user.id != self.admin_user_id:
@@ -183,6 +242,7 @@ class VirtualPersonaBot:
             )
         await update.message.reply_text("\n\n".join(lines))
 
+    @_retry_on_timeout
     async def _cmd_allow_user(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """添加允许互动的用户"""
         if update.effective_user.id != self.admin_user_id:
@@ -198,6 +258,7 @@ class VirtualPersonaBot:
         except ValueError:
             await update.message.reply_text("请输入有效的user_id")
 
+    @_retry_on_timeout
     async def _cmd_allow_group(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """添加允许互动的群"""
         if update.effective_user.id != self.admin_user_id:
@@ -219,6 +280,7 @@ class VirtualPersonaBot:
         except ValueError:
             await update.message.reply_text("请输入有效的group_id")
 
+    @_retry_on_timeout
     async def _cmd_set_role(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """手动设定关系初始值（引导角色认知）"""
         if update.effective_user.id != self.admin_user_id:
@@ -249,6 +311,7 @@ class VirtualPersonaBot:
             f"   角色={role} 亲密度={closeness}"
         )
 
+    @_retry_on_timeout
     async def _cmd_inject_memory(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """手动注入记忆（设定前置故事）"""
         if update.effective_user.id != self.admin_user_id:
@@ -274,6 +337,7 @@ class VirtualPersonaBot:
         )
         await update.message.reply_text(f"✅ 已注入记忆：{memory_text[:50]}...")
 
+    @_retry_on_timeout
     async def _cmd_addsticker(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if update.effective_user.id != self.admin_user_id:
             return
@@ -308,6 +372,7 @@ class VirtualPersonaBot:
         )
         await update.message.reply_text(f"✅ 表情包 {sticker['id']} mood={mood} tags={tags}")
 
+    @_retry_on_timeout
     async def _cmd_help(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if update.effective_user.id != self.admin_user_id:
             return
@@ -324,6 +389,7 @@ class VirtualPersonaBot:
             "/consolidate - 强制整合记忆\n"
         )
 
+    @_retry_on_timeout
     async def _cmd_browse(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if update.effective_user.id != self.admin_user_id:
             return
@@ -331,6 +397,7 @@ class VirtualPersonaBot:
         await self.orch.browser.browse()
         await update.message.reply_text("✅ 完成")
 
+    @_retry_on_timeout
     async def _cmd_consolidate(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if update.effective_user.id != self.admin_user_id:
             return
@@ -341,11 +408,55 @@ class VirtualPersonaBot:
         self.app = app
         me = await app.bot.get_me()
         self.bot_username = me.username or ""
-        logger.info(f"[Bot] 我是 @{self.bot_username}")
+        self.bot_id = me.id
+        logger.info(f"[Bot] 我是 @{self.bot_username} (id={self.bot_id})")
+
+        # 注册对所有用户可见的命令
+        try:
+            await app.bot.set_my_commands(
+                [BotCommand("start", "开始对话")],
+                scope=BotCommandScopeDefault(),
+            )
+            # 管理员可见的完整命令列表
+            admin_commands = [
+                BotCommand("start", "开始对话"),
+                BotCommand("status", "系统状态"),
+                BotCommand("relationships", "关系列表"),
+                BotCommand("set_role", "设定关系"),
+                BotCommand("inject_memory", "注入记忆"),
+                BotCommand("allow_user", "允许用户互动"),
+                BotCommand("allow_group", "允许群互动"),
+                BotCommand("addsticker", "添加表情包"),
+                BotCommand("browse", "强制浏览"),
+                BotCommand("consolidate", "整合记忆"),
+                BotCommand("help", "管理帮助"),
+            ]
+            await app.bot.set_my_commands(
+                admin_commands,
+                scope=BotCommandScopeChat(chat_id=self.admin_user_id),
+            )
+        except Exception as e:
+            logger.warning(f"[Bot] 设置命令列表失败: {e}")
+
         await self.orch.start_background_tasks()
 
+    async def _error_handler(self, update: object, context: ContextTypes.DEFAULT_TYPE):
+        """全局错误处理，避免超时等网络错误打印完整堆栈"""
+        err = context.error
+        if isinstance(err, (TimedOut, NetworkError)):
+            logger.warning(f"[Bot] 网络错误（已忽略）: {err}")
+        else:
+            logger.error(f"[Bot] 未处理异常: {err}", exc_info=err)
+
+    async def _post_shutdown(self, app: Application):
+        logger.info("[Bot] 关闭中，整合最后的记忆...")
+        await self.orch.stop()
+
     def run(self):
-        app = Application.builder().token(self.bot_token).post_init(self._post_init).build()
+        app = Application.builder().token(self.bot_token).post_init(self._post_init).post_shutdown(self._post_shutdown).build()
+
+        # 命令处理
+        app.add_handler(CommandHandler("start", self._cmd_start))
 
         # 管理命令
         for cmd, handler in [
@@ -367,6 +478,8 @@ class VirtualPersonaBot:
             filters.TEXT & ~filters.COMMAND,
             self._handle_message,
         ))
+
+        app.add_error_handler(self._error_handler)
 
         logger.info("[Bot] 启动...")
         app.run_polling(drop_pending_updates=True)

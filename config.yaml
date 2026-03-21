@@ -63,15 +63,15 @@ system:
 llm:
   # 表达层（最终生成回复）用好模型
   expression:
-    model: "gpt-4o"
-    base_url: "https://api.openai.com/v1"
-    api_key: "sk-xxx"
+    model: "claude-sonnet-4.6"
+    base_url: ""
+    api_key: ""
     
   # 其他Agent用便宜模型
   utility:
-    model: "deepseek-chat"
-    base_url: "https://api.deepseek.com"
-    api_key: "sk-xxx"
+    model: "claude-sonnet-4.6"
+    base_url: ""
+    api_key: ""
 
 
 # ========== 资讯源 ==========
@@ -88,8 +88,8 @@ feeds:
 
 # ========== Telegram 配置 ==========
 telegram:
-  bot_token: "YOUR_BOT_TOKEN"
-  admin_user_id: 123456789
+  bot_token: ""
+  admin_user_id: 
   
   # 白名单（留空=允许所有人/群）
   allowed_users: []       # [123, 456, 789]

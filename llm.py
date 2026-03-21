@@ -54,11 +54,12 @@ class LLMClient:
 
         for attempt in range(3):
             try:
-                resp = await client.chat.completions.create(**kwargs)
+                resp = await client.chat.completions.create(**kwargs, timeout=30)
                 return resp.choices[0].message.content.strip()
             except Exception as e:
                 logger.warning(f"LLM call failed (attempt {attempt+1}): {e}")
-                await asyncio.sleep(2 ** attempt)
+                if attempt < 2:
+                    await asyncio.sleep(2 ** attempt)
 
         return ""
 
