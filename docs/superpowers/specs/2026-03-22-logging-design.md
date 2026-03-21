@@ -9,10 +9,11 @@ Add file-based logging to the virtual-persona bot. Currently all log output goes
 
 ## Requirements
 
-- `log/info.log` — captures all INFO, WARNING, and ERROR messages (full audit trail)
-- `log/warn.log` — captures only WARNING and ERROR messages (fast problem triage)
+- `log/info.log` — captures all INFO and above messages (INFO, WARNING, ERROR, CRITICAL — full audit trail)
+- `log/warn.log` — captures WARNING and above messages (WARNING, ERROR, CRITICAL — fast problem triage)
 - No log rotation; file management is handled externally
 - No changes to any file except `main.py`
+- Bot must be launched from the project root directory (`python main.py`) for relative log paths to resolve correctly
 
 ## Directory Structure
 
@@ -39,7 +40,7 @@ Add two `FileHandler` instances to the root logger alongside the existing `Strea
 
 File handlers use `mode="a"` (append) and `encoding="utf-8"`.
 
-Third-party noisy libraries (httpx, openai, telegram, httpcore) remain suppressed at WARNING level.
+Third-party noisy libraries (httpx, openai, telegram, httpcore, chromadb) remain suppressed at WARNING level.
 
 ### No changes to other files
 
