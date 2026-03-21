@@ -18,6 +18,7 @@ from relationship import RelationshipManager
 from chat_context import ChatContextManager
 from group_behavior import GroupBehaviorEngine
 from expression import ExpressionSynthesizer
+from inner_state import InnerStateManager
 
 logger = logging.getLogger(__name__)
 
@@ -58,11 +59,19 @@ class Orchestrator:
         # ---- 主动引擎（需要知道目标用户列表）----
         self.proactive = ProactiveEngine(self.persona, self.bus)
 
+        # ---- 内心独白层 ----
+        inner_state_cfg = config.get("system", {})
+        self.inner_state = InnerStateManager(
+            self.persona, self.llm, self.emotion, self.life_sim, self.bus,
+            ttl_hours=inner_state_cfg.get("pending_thought_ttl_hours", 48),
+        )
+
         # ---- 表达层 ----
         self.expression = ExpressionSynthesizer(
             self.persona, self.llm, self.memory, self.emotion,
             self.life_sim, self.stickers, self.browser,
             self.relationships, self.chat_ctx,
+            inner_state=self.inner_state,
         )
 
         # 主动消息回调: chat_id → callback
@@ -159,21 +168,25 @@ class Orchestrator:
         if not trigger:
             return
 
-        # 选择发给谁：按亲密度排序选最亲近的
-        all_rels = self.relationships.list_all()
-        if not all_rels:
-            return
-
-        # 选最亲近的那个人（可以扩展为更复杂的逻辑）
-        target = all_rels[0]
-        target_chat_id = target["user_id"]  # 私聊 chat_id 通常等于 user_id
+        # 选择发给谁：follow_up 发给指定对象，其他触发器发给最亲近的人
+        if trigger.get("type") == "follow_up":
+            target_user_id = trigger.get("target_user_id", 0)
+            target_chat_id = target_user_id   # 私聊 chat_id == user_id
+            if not target_chat_id or target_chat_id not in self.proactive_callbacks:
+                return  # 目标未注册，跳过
+        else:
+            all_rels = self.relationships.list_all()
+            if not all_rels:
+                return
+            target = all_rels[0]
+            target_chat_id = target["user_id"]
 
         callback = self.proactive_callbacks.get(target_chat_id)
         if not callback:
             return
 
         messages = await self.expression.compose_proactive(
-            trigger, chat_id=target_chat_id, user_id=target["user_id"],
+            trigger, chat_id=target_chat_id, user_id=target_chat_id,
         )
 
         for msg in messages:
@@ -184,6 +197,11 @@ class Orchestrator:
                 )
 
         await callback(messages)
+
+        if trigger.get("type") == "follow_up":
+            await self.bus.emit("proactive.follow_up_fired", {
+                "thought_content": trigger.get("content", ""),
+            })
 
     # ========== 后台循环 ==========
 
@@ -228,6 +246,18 @@ class Orchestrator:
             except Exception as e:
                 logger.error(f"Memory error: {e}", exc_info=True)
 
+    async def _inner_state_loop(self):
+        import random
+        cfg = self.config.get("system", {})
+        interval_range = cfg.get("inner_state_interval_hours", [2, 3])
+        while self.running:
+            hours = random.uniform(interval_range[0], interval_range[1])
+            await asyncio.sleep(hours * 3600)
+            try:
+                await self.inner_state.generate_monologue()
+            except Exception as e:
+                logger.error(f"Inner state error: {e}", exc_info=True)
+
     async def _conversation_end_check_loop(self):
         """定期检查是否有会话结束，触发记忆整合"""
         while self.running:
@@ -243,6 +273,7 @@ class Orchestrator:
         asyncio.create_task(self._proactive_loop())
         asyncio.create_task(self._memory_loop())
         asyncio.create_task(self._conversation_end_check_loop())
+        asyncio.create_task(self._inner_state_loop())
         logger.info("[Orchestrator] 后台任务已启动")
 
     async def stop(self):
