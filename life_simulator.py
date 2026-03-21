@@ -73,6 +73,7 @@ class LifeSimulator:
                     self.current_action = "刚醒，赖床中"
                     self.location = "家"
                     logger.info(f"[LifeSim] 起床了，体力={self.physical.energy:.0f}")
+                    await self.bus.emit("life.woke_up", {})
             else:
                 return  # 还在睡，什么都不做
 
