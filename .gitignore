@@ -1,0 +1,15 @@
+# Log files
+log/*.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Data (ChromaDB, relationships)
+data/chroma/
+data/relationships.json
+
+# Env / secrets
+.env
+config.local.yaml
