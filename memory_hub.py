@@ -153,6 +153,10 @@ source_privacy说明：
 
             self.buffers[cid].clear()
             logger.info(f"[Memory] 整合完成 chat_id={cid}")
+            await self.bus.emit("memory.consolidated", {
+                "chat_id": cid,
+                "convo_text": convo_text[:1500],
+            })
 
     async def recall(self, query: str, current_chat_context: str = "private",
                      about_person: str = "", n_results: int = 5) -> dict:
