@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="aurora">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>虚拟人格系统 — 架构图 & 使用手册</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&family=Lora:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg: #0a0a0f;
@@ -593,6 +593,421 @@ footer {
   nav .inner { gap:0; }
   nav a { padding:8px 12px; font-size:12px; }
 }
+
+/* ===================================================
+   THEME SWITCHER UI
+   =================================================== */
+.theme-switcher {
+  position:fixed;
+  bottom:28px;
+  left:18px;
+  z-index:500;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+}
+.ts-label {
+  font-size:9px;
+  color:var(--text2);
+  letter-spacing:1.5px;
+  font-weight:600;
+  text-transform:uppercase;
+  margin-bottom:2px;
+}
+.theme-btn {
+  width:36px;height:36px;
+  border-radius:50%;
+  border:2px solid var(--border);
+  background:var(--surface);
+  cursor:pointer;
+  transition:all 0.2s;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:15px;
+  color:var(--text2);
+  position:relative;
+}
+.theme-btn:hover { border-color:var(--accent);color:var(--accent);transform:scale(1.1); }
+.theme-btn.active {
+  border-color:var(--accent);
+  background:color-mix(in srgb,var(--accent) 15%,transparent);
+  color:var(--accent);
+}
+.ts-tip {
+  position:absolute;
+  left:calc(100% + 10px);
+  top:50%;
+  transform:translateY(-50%);
+  background:var(--surface2);
+  border:1px solid var(--border);
+  padding:4px 10px;
+  border-radius:6px;
+  font-size:11px;
+  white-space:nowrap;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity 0.15s;
+  color:var(--text);
+  font-family:'Noto Sans SC',sans-serif;
+}
+.theme-btn:hover .ts-tip { opacity:1; }
+
+/* ===================================================
+   THEME 1 — AURORA GLASS (default)
+   极光玻璃：毛玻璃卡片 + 渐变光晕背景
+   =================================================== */
+[data-theme="aurora"] body::before {
+  content:'';
+  position:fixed;
+  top:-25%;left:-20%;
+  width:75vw;height:75vw;
+  background:radial-gradient(circle,rgba(124,92,252,0.07) 0%,transparent 60%);
+  pointer-events:none;
+  z-index:-1;
+  animation:aBlob1 22s ease-in-out infinite alternate;
+}
+[data-theme="aurora"] body::after {
+  content:'';
+  position:fixed;
+  bottom:-25%;right:-15%;
+  width:65vw;height:65vw;
+  background:radial-gradient(circle,rgba(252,92,140,0.05) 0%,transparent 60%);
+  pointer-events:none;
+  z-index:-1;
+  animation:aBlob2 28s ease-in-out infinite alternate;
+}
+@keyframes aBlob1 {
+  0%  { transform:translate(0,0) scale(1); }
+  100%{ transform:translate(18vw,10vh) scale(1.15); }
+}
+@keyframes aBlob2 {
+  0%  { transform:translate(0,0) scale(1); }
+  100%{ transform:translate(-14vw,-8vh) scale(1.2); }
+}
+[data-theme="aurora"] .card {
+  background:rgba(26,26,40,0.65);
+  backdrop-filter:blur(14px) saturate(160%);
+  -webkit-backdrop-filter:blur(14px) saturate(160%);
+}
+[data-theme="aurora"] .arch-container,
+[data-theme="aurora"] .flow-container,
+[data-theme="aurora"] .file-tree,
+[data-theme="aurora"] .rel-card {
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  background:rgba(18,18,26,0.6);
+}
+[data-theme="aurora"] .scenario {
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  background:rgba(18,18,26,0.5);
+}
+[data-theme="aurora"] nav {
+  background:rgba(6,6,18,0.7);
+  backdrop-filter:blur(28px) saturate(180%);
+  -webkit-backdrop-filter:blur(28px) saturate(180%);
+}
+
+/* ===================================================
+   THEME 2 — TERMINAL MONO
+   极简终端：纯黑 + 终端绿 + 等宽字体 + 扫描线
+   =================================================== */
+[data-theme="terminal"] {
+  --bg:#000000;
+  --surface:#0d0d0d;
+  --surface2:#111111;
+  --surface3:#161616;
+  --border:#1e1e1e;
+  --text:#c8f0c8;
+  --text2:#4a7a4a;
+  --accent:#00e87a;
+  --accent2:#00ccff;
+  --accent3:#ffcc00;
+  --pink:#ff66cc;
+  --green:#00e87a;
+  --yellow:#ffcc00;
+  --orange:#ff8800;
+  --cyan:#00ccff;
+  --red:#ff4444;
+}
+[data-theme="terminal"] body {
+  font-family:'JetBrains Mono','Courier New',monospace;
+}
+/* scanline overlay */
+[data-theme="terminal"] body::before {
+  content:'';
+  position:fixed;
+  top:0;left:0;right:0;bottom:0;
+  background:repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(0,232,122,0.006) 3px,
+    rgba(0,232,122,0.006) 4px
+  );
+  pointer-events:none;
+  z-index:9997;
+  animation:none;
+}
+[data-theme="terminal"] body::after { display:none; }
+/* hero */
+[data-theme="terminal"] .hero::before { display:none; }
+[data-theme="terminal"] .hero h1 {
+  background:none !important;
+  -webkit-background-clip:unset !important;
+  background-clip:unset !important;
+  -webkit-text-fill-color:var(--accent) !important;
+  font-family:'JetBrains Mono',monospace;
+  font-weight:600;
+  letter-spacing:-2px;
+}
+[data-theme="terminal"] .hero h1::after {
+  content:'_';
+  animation:termBlink 1.2s step-end infinite;
+  color:var(--accent);
+  -webkit-text-fill-color:var(--accent);
+}
+@keyframes termBlink { 0%,100%{opacity:1}50%{opacity:0} }
+[data-theme="terminal"] .hero .sub {
+  font-family:'JetBrains Mono',monospace;
+  font-size:13px;
+}
+[data-theme="terminal"] .hero .sub::before {
+  content:'$ ';
+  color:var(--accent);
+}
+[data-theme="terminal"] .version-badge {
+  border-color:var(--accent);
+  color:var(--accent);
+  border-radius:2px;
+}
+/* nav */
+[data-theme="terminal"] nav {
+  background:#000000;
+  backdrop-filter:none;
+  border-bottom:1px solid var(--accent);
+}
+[data-theme="terminal"] nav a { border-radius:0; }
+[data-theme="terminal"] nav a:hover,
+[data-theme="terminal"] nav a.active {
+  color:var(--accent);
+  background:rgba(0,232,122,0.08);
+  border-radius:0;
+}
+/* sections */
+[data-theme="terminal"] section h2 {
+  font-family:'JetBrains Mono',monospace;
+  font-size:17px;
+  font-weight:600;
+}
+[data-theme="terminal"] section h2 .icon { display:none; }
+[data-theme="terminal"] section h2::before {
+  content:'// ';
+  color:var(--accent);
+}
+[data-theme="terminal"] h3 {
+  font-family:'JetBrains Mono',monospace;
+  font-size:13px;
+  color:var(--accent);
+}
+[data-theme="terminal"] h3::before { content:'## '; color:var(--text2); }
+/* sharp corners on everything */
+[data-theme="terminal"] .card,
+[data-theme="terminal"] .arch-container,
+[data-theme="terminal"] .flow-container,
+[data-theme="terminal"] .timeline-item,
+[data-theme="terminal"] .scenario,
+[data-theme="terminal"] .code-block,
+[data-theme="terminal"] .file-tree,
+[data-theme="terminal"] .rel-card,
+[data-theme="terminal"] .module-info-panel,
+[data-theme="terminal"] .alert,
+[data-theme="terminal"] .tab-btn,
+[data-theme="terminal"] nav a { border-radius:2px !important; }
+[data-theme="terminal"] .scenario-header .num { border-radius:2px !important; }
+/* card */
+[data-theme="terminal"] .card::before { display:none; }
+[data-theme="terminal"] .card:hover {
+  transform:none;
+  box-shadow:0 0 0 1px var(--accent),0 0 20px rgba(0,232,122,0.07);
+  border-color:var(--accent);
+}
+[data-theme="terminal"] .card .tag {
+  border-radius:2px;
+  color:var(--accent);
+  border:1px solid rgba(0,232,122,0.25);
+  background:rgba(0,232,122,0.05);
+}
+/* tabs */
+[data-theme="terminal"] .tab-btn.active {
+  background:rgba(0,232,122,0.1);
+  border-color:var(--accent);
+  color:var(--accent);
+}
+/* timeline */
+[data-theme="terminal"] .timeline::before { background:var(--accent); }
+[data-theme="terminal"] .timeline-item::before { background:var(--accent); }
+[data-theme="terminal"] .timeline-item .meta { color:var(--accent); }
+/* code block */
+[data-theme="terminal"] .code-block { border-left:3px solid var(--accent); }
+/* footer */
+[data-theme="terminal"] footer { border-top:1px solid var(--accent); }
+/* module panel */
+[data-theme="terminal"] .module-info-panel { border-color:var(--accent); }
+[data-theme="terminal"] .module-info-panel h4 { color:var(--accent); }
+/* cmd table */
+[data-theme="terminal"] .cmd-table th { color:var(--accent); }
+[data-theme="terminal"] .cmd-table code { color:var(--accent); }
+/* alert */
+[data-theme="terminal"] .alert-info { background:rgba(0,232,122,0.05); border-color:rgba(0,232,122,0.2); color:var(--accent); }
+[data-theme="terminal"] .alert-tip { background:rgba(0,204,255,0.05); border-color:rgba(0,204,255,0.2); color:var(--accent2); }
+[data-theme="terminal"] .alert-warn { background:rgba(255,204,0,0.05); border-color:rgba(255,204,0,0.2); color:var(--yellow); }
+
+/* ===================================================
+   THEME 3 — WARM EMBER
+   琥珀暖调：暗棕底色 + 琥珀橙 + 衬线字体
+   =================================================== */
+[data-theme="ember"] {
+  --bg:#0f0c08;
+  --surface:#1a1510;
+  --surface2:#231c14;
+  --surface3:#2c241a;
+  --border:#3e3020;
+  --text:#f5e6c8;
+  --text2:#9a7850;
+  --accent:#f0a020;
+  --accent2:#e05050;
+  --accent3:#e07830;
+  --pink:#e05070;
+  --green:#80c040;
+  --yellow:#e8b030;
+  --orange:#e07830;
+  --cyan:#30b8c0;
+  --red:#e05050;
+}
+[data-theme="ember"] body {
+  background:
+    radial-gradient(ellipse at 15% 10%,rgba(240,160,32,0.05) 0%,transparent 40%),
+    radial-gradient(ellipse at 85% 90%,rgba(224,80,80,0.04) 0%,transparent 40%),
+    var(--bg);
+}
+[data-theme="ember"] body::before,
+[data-theme="ember"] body::after { display:none; }
+/* headings: serif */
+[data-theme="ember"] .hero h1,
+[data-theme="ember"] section h2,
+[data-theme="ember"] h3,
+[data-theme="ember"] .card h4,
+[data-theme="ember"] .timeline-item h4 {
+  font-family:'Lora',Georgia,'Noto Serif SC',serif;
+}
+[data-theme="ember"] .hero h1 {
+  background:linear-gradient(135deg,#f5c040 0%,#e05050 55%,#f0a020 100%) !important;
+  -webkit-background-clip:text !important;
+  background-clip:text !important;
+  -webkit-text-fill-color:transparent !important;
+  font-style:italic;
+  letter-spacing:-1px;
+}
+[data-theme="ember"] .hero::before {
+  background:radial-gradient(ellipse at 50% 50%,rgba(240,160,32,0.07) 0%,transparent 60%);
+}
+/* nav */
+[data-theme="ember"] nav {
+  background:rgba(15,12,8,0.9);
+  border-bottom:1px solid var(--border);
+}
+[data-theme="ember"] nav a:hover,
+[data-theme="ember"] nav a.active {
+  color:var(--accent);
+  background:rgba(240,160,32,0.1);
+}
+/* version badge */
+[data-theme="ember"] .version-badge {
+  color:var(--accent);
+  border-color:rgba(240,160,32,0.3);
+  border-radius:4px;
+}
+/* cards: rounder + warm gradient */
+[data-theme="ember"] .card {
+  border-radius:20px;
+  background:linear-gradient(145deg,var(--surface),var(--surface2));
+}
+[data-theme="ember"] .card:hover {
+  border-color:var(--accent);
+  box-shadow:0 8px 40px rgba(240,160,32,0.14);
+}
+[data-theme="ember"] .card::before {
+  background:linear-gradient(90deg,var(--accent),var(--accent3));
+}
+[data-theme="ember"] .card .tag {
+  color:var(--accent);
+  background:rgba(240,160,32,0.1);
+  border-radius:8px;
+}
+[data-theme="ember"] .card .card-icon { font-size:30px; }
+/* timeline */
+[data-theme="ember"] .timeline::before {
+  background:linear-gradient(to bottom,var(--accent),var(--accent2),var(--accent3));
+}
+[data-theme="ember"] .timeline-item::before { background:var(--accent); }
+[data-theme="ember"] .timeline-item .meta { color:var(--accent); }
+/* scenario num badge */
+[data-theme="ember"] .scenario-header .num {
+  background:linear-gradient(135deg,var(--accent),var(--accent3));
+}
+/* tabs */
+[data-theme="ember"] .tab-btn.active {
+  background:rgba(240,160,32,0.12);
+  border-color:var(--accent);
+  color:var(--accent);
+}
+/* code block */
+[data-theme="ember"] .code-block {
+  border-left:3px solid var(--accent);
+  background:var(--surface2);
+}
+/* alerts */
+[data-theme="ember"] .alert-info {
+  background:rgba(240,160,32,0.07);
+  border-color:rgba(240,160,32,0.2);
+  color:var(--accent);
+}
+[data-theme="ember"] .alert-tip {
+  background:rgba(128,192,64,0.07);
+  border-color:rgba(128,192,64,0.2);
+  color:var(--green);
+}
+[data-theme="ember"] .alert-warn {
+  background:rgba(232,176,48,0.08);
+  border-color:rgba(232,176,48,0.2);
+  color:var(--yellow);
+}
+/* cmd table */
+[data-theme="ember"] .cmd-table th { color:var(--accent); }
+[data-theme="ember"] .cmd-table code { color:var(--cyan); }
+/* module panel */
+[data-theme="ember"] .module-info-panel { border-color:var(--accent); }
+[data-theme="ember"] .module-info-panel h4 { color:var(--accent); }
+/* arch container */
+[data-theme="ember"] .arch-container,
+[data-theme="ember"] .flow-container {
+  background:var(--surface);
+  border-color:var(--border);
+}
+/* file tree */
+[data-theme="ember"] .file-tree { background:var(--surface); }
+/* rel cards */
+[data-theme="ember"] .rel-card { background:var(--surface); }
+[data-theme="ember"] .rel-card .rel-quote { border-left-color:var(--accent); }
+/* section h2 icon */
+[data-theme="ember"] section h2 .icon { font-size:24px; }
+/* scrollbar */
+[data-theme="ember"] ::-webkit-scrollbar-thumb { background:var(--border); }
+/* selection */
+[data-theme="ember"] ::selection { background:var(--accent); }
 </style>
 </head>
 <body>
@@ -1847,6 +2262,23 @@ python main.py
   <div class="connections" id="modInfoConn"></div>
 </div>
 
+<!-- Theme Switcher -->
+<div class="theme-switcher">
+  <div class="ts-label">风格</div>
+  <button class="theme-btn" data-t="aurora" onclick="setTheme('aurora')">
+    ✦
+    <span class="ts-tip">Aurora 极光</span>
+  </button>
+  <button class="theme-btn" data-t="terminal" onclick="setTheme('terminal')">
+    &gt;_
+    <span class="ts-tip">Terminal 终端</span>
+  </button>
+  <button class="theme-btn" data-t="ember" onclick="setTheme('ember')">
+    ◉
+    <span class="ts-tip">Ember 琥珀</span>
+  </button>
+</div>
+
 <footer>
   <p>Virtual Persona System v2.0 — Multi-Relationship Architecture</p>
   <p style="margin-top:4px;opacity:0.5;">单一个体 · 多重关系 · 真实社交模拟</p>
@@ -2055,6 +2487,20 @@ document.querySelectorAll('.mod').forEach(el => {
     if (modId && modData[modId]) showModInfo(modId);
   });
 });
+
+// Theme switching
+function setTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  document.querySelectorAll('.theme-btn').forEach(b => {
+    b.classList.toggle('active', b.getAttribute('data-t') === theme);
+  });
+  try { localStorage.setItem('vp-theme', theme); } catch(e) {}
+}
+(function() {
+  let saved;
+  try { saved = localStorage.getItem('vp-theme'); } catch(e) {}
+  setTheme(saved || 'aurora');
+})();
 
 // Click outside to close panel
 document.addEventListener('click', (e) => {
