@@ -16,7 +16,8 @@ logger = logging.getLogger(__name__)
 
 class ExpressionSynthesizer:
     def __init__(self, persona, llm, memory, emotion, life_sim,
-                 sticker_engine, browser, relationship_mgr, chat_ctx_mgr):
+                 sticker_engine, browser, relationship_mgr, chat_ctx_mgr,
+                 inner_state=None):
         self.persona = persona
         self.llm = llm
         self.memory = memory
@@ -26,6 +27,7 @@ class ExpressionSynthesizer:
         self.browser = browser
         self.rel = relationship_mgr
         self.chat_ctx = chat_ctx_mgr
+        self.inner_state = inner_state
 
     async def compose_reply(
         self,
@@ -111,6 +113,10 @@ class ExpressionSynthesizer:
             for c in recent_browsing
         ) if recent_browsing else "最近没看到什么特别的"
 
+        # ---- 内心独白 ----
+        monologue_text = self.inner_state.get_monologue_text() if self.inner_state else ""
+        monologue_section = f"\n## 你心里在转的\n{monologue_text}\n" if monologue_text else ""
+
         # ---- 构建 prompt ----
         # 群聊和私聊用不同的指令
         if is_group:
@@ -169,7 +175,7 @@ class ExpressionSynthesizer:
 正在做：{life_status['current_action']} @ {life_status['location']}
 心情：{emotion_style['tone']}（valence={emotion_status['valence']:.1f}）
 体力：{life_status['physical']['energy']}/100
-
+{monologue_section}
 ## 说话风格
 {self.persona['speaking_style']}
 当前情绪下 → 语气{emotion_style['tone']}，长度{emotion_style['message_length']}，emoji{emotion_style['emoji_freq']}
