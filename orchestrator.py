@@ -92,6 +92,7 @@ class Orchestrator:
         chat_type: str = "private",
         group_title: str = "",
         mentioned_me: bool = False,
+        media: list = None,
     ) -> Optional[list]:
         """
         处理任意来源的消息。
@@ -102,14 +103,23 @@ class Orchestrator:
 
         # 2. 更新聊天窗口
         window = self.chat_ctx.get_or_create(chat_id, chat_type, group_title)
+        _media_label = ""
+        if media:
+            for m in media:
+                if m.get("label") == "photo":
+                    _media_label += " [图片]"
+                elif m.get("label") == "sticker":
+                    _media_label += " [表情包]"
+        _stored_text = text + _media_label
+
         self.chat_ctx.add_message(
-            chat_id, user_id, user_name, text,
+            chat_id, user_id, user_name, _stored_text,
             is_me=False, mentioned_me=mentioned_me,
         )
 
         # 3. 记入记忆缓冲
         self.memory.add_message(
-            chat_id, "user", text,
+            chat_id, "user", _stored_text,
             user_id=user_id, user_name=user_name,
             context_type="group" if chat_type in ("group", "supergroup") else "private",
         )
@@ -140,6 +150,7 @@ class Orchestrator:
             chat_id=chat_id,
             chat_type=chat_type,
             reply_mode=reply_mode,
+            media=media,
         )
 
         # 7. 记录自己的回复
