@@ -399,12 +399,7 @@ python -m pytest tests/test_life_simulator_enriched.py -v -k "weather or season 
 
 - [ ] **Step 3: 实现天气方法**
 
-在 `life_simulator.py` 顶部 import 区追加：
-
-```python
-import httpx
-from pathlib import Path
-```
+> `import httpx`、`from pathlib import Path`、`from collections import Counter` 已在 Task 1 Step 0 添加，无需重复。
 
 在 `LifeSimulator` 类（`_update_yearago` 方法之后）追加：
 
@@ -787,13 +782,7 @@ python -m pytest tests/test_life_simulator_enriched.py -v -k "save or load or ro
 
 - [ ] **Step 3: 实现持久化方法**
 
-**3a.** 在 `life_simulator.py` 的 import 区确保包含（如还没有）：
-
-```python
-import json
-import dataclasses
-from pathlib import Path
-```
+**3a.** 所有新 import 已在 Task 1 Step 0 添加，无需重复。
 
 **3b.** 在 `LifeSimulator.__init__` 的 `self._yearago_ticks_since_change` 初始化之后追加：
 
