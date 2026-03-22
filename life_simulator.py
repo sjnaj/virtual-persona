@@ -346,10 +346,27 @@ notable=true表示这件事她可能想跟朋友说。shareable_thought是她想
     def _get_activity_hints(self, hour: float, is_weekday: bool) -> str:
         pool = self._ACTIVITY_POOL_WEEKDAY if is_weekday else self._ACTIVITY_POOL_WEEKEND
         h = int(hour) % 24
+        base_hint = "发呆、刷手机、失眠"
         for start, end, hints in pool:
             if start <= h < end:
-                return hints
-        return "发呆、刷手机、失眠"
+                base_hint = hints
+                break
+
+        if not is_weekday:
+            return base_hint
+
+        # Append schedule context from config (loop refactored from early-return to
+        # break+variable to enable this appending — logic is equivalent)
+        dp = self.persona.get("daily_patterns", {})
+        ws = dp.get("work_start", [9, 10])
+        we = dp.get("work_end", [18, 19])
+        ln = dp.get("lunch", [11, 13])
+        schedule = (
+            f"（上班时间约{ws[0]}-{ws[1]}点，"
+            f"午饭约{ln[0]}-{ln[1]}点，"
+            f"下班约{we[0]}-{we[1]}点）"
+        )
+        return base_hint + "，" + schedule
 
     # ── 年糕状态 ──────────────────────────────────────────────────────────────
 

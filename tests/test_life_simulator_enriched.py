@@ -611,3 +611,80 @@ def test_tick_prompt_contains_interests():
     # Use "穿搭" (not "猫" — "猫" appears in yearago_str regardless of this change)
     assert "穿搭" in prompt
     assert "甜品" in prompt
+
+
+# ── Task: dynamic schedule hint ─────────────────────────────────────────────
+
+def _make_sim_with_schedule():
+    from life_simulator import LifeSimulator
+    from event_bus import EventBus
+    from unittest.mock import patch
+    bus = EventBus()
+    persona = {
+        "name": "测试",
+        "occupation": "设计师",
+        "personality": {"extraversion": 0.7, "conscientiousness": 0.5},
+        "daily_patterns": {
+            "wake_up": [7, 8], "sleep": [23, 25],
+            "work_start": [9, 10], "work_end": [18, 19], "lunch": [11, 13],
+        },
+        "interests": [],
+    }
+    llm = MagicMock()
+    llm.call_json = AsyncMock(return_value=None)
+    with patch.object(LifeSimulator, '_load_state', lambda self: None):
+        sim = LifeSimulator(persona, llm, bus)
+    return sim
+
+
+def test_weekday_hints_include_work_start():
+    sim = _make_sim_with_schedule()
+    hints = sim._get_activity_hints(10.0, is_weekday=True)
+    assert "上班时间约9-10" in hints  # work_start [9,10] from config
+
+
+def test_weekday_hints_include_work_end():
+    sim = _make_sim_with_schedule()
+    hints = sim._get_activity_hints(10.0, is_weekday=True)
+    assert "下班约18-19" in hints  # work_end [18,19] from config
+
+
+def test_weekday_hints_include_lunch():
+    sim = _make_sim_with_schedule()
+    hints = sim._get_activity_hints(10.0, is_weekday=True)
+    assert "午饭约11-13" in hints  # lunch [11,13] from config
+
+
+def test_weekend_hints_do_not_include_schedule_annotation():
+    sim = _make_sim_with_schedule()
+    hints = sim._get_activity_hints(14.0, is_weekday=False)
+    # Weekend should not have schedule parenthetical (this test passes before
+    # implementation too — it is a guard that the weekend path stays clean)
+    assert "上班时间" not in hints
+    assert "下班" not in hints
+
+
+def test_schedule_annotation_uses_config_not_hardcoded():
+    """Custom schedule values appear in hints, not hardcoded defaults."""
+    from life_simulator import LifeSimulator
+    from event_bus import EventBus
+    from unittest.mock import patch
+    bus = EventBus()
+    persona = {
+        "name": "测试",
+        "occupation": "设计师",
+        "personality": {"extraversion": 0.7, "conscientiousness": 0.5},
+        "daily_patterns": {
+            "wake_up": [6, 7], "sleep": [22, 23],
+            "work_start": [8, 9], "work_end": [17, 18], "lunch": [12, 13],
+        },
+        "interests": [],
+    }
+    llm = MagicMock()
+    llm.call_json = AsyncMock(return_value=None)
+    with patch.object(LifeSimulator, '_load_state', lambda self: None):
+        sim = LifeSimulator(persona, llm, bus)
+    hints = sim._get_activity_hints(10.0, is_weekday=True)
+    assert "上班时间约8-9" in hints   # custom work_start
+    assert "下班约17-18" in hints     # custom work_end
+    assert "午饭约12-13" in hints     # custom lunch
