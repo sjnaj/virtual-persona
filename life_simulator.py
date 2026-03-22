@@ -224,6 +224,61 @@ notable=true表示这件事她可能想跟朋友说。shareable_thought是她想
 
     _YEARAGO_INDOOR_LOCATIONS = ["沙发", "床上", "窗台", "猫窝"]
 
+    # ── 天气 ──────────────────────────────────────────────────────────────────
+
+    _WEATHER_MAPPING = [
+        (["sunny", "clear"],           "晴"),
+        (["partly cloudy", "partly"],  "多云"),
+        (["cloudy", "overcast"],       "阴"),
+        (["drizzle", "light rain"],    "小雨"),
+        (["heavy rain", "torrential"], "大雨"),
+        (["rain", "shower"],           "雨"),
+        (["thunderstorm", "thunder"],   "雷阵雨"),
+        (["snow", "blizzard"],         "雪"),
+        (["fog", "mist", "haze"],      "雾霾"),
+    ]
+
+    _SEASON_DEFAULTS = {
+        "spring": (range(3, 6),  "多云", 18),
+        "summer": (range(6, 9),  "晴热", 32),
+        "autumn": (range(9, 12), "晴",   22),
+        "winter": ([12, 1, 2],   "阴",   6),
+    }
+
+    def _map_weather_condition(self, raw: str) -> str:
+        lower = raw.lower()
+        for keywords, chinese in self._WEATHER_MAPPING:
+            if any(kw in lower for kw in keywords):
+                return chinese
+        return raw
+
+    def _season_default_weather(self) -> dict:
+        month = datetime.now().month
+        for _season, (months, condition, temp) in self._SEASON_DEFAULTS.items():
+            if month in months:
+                return {
+                    "condition": condition,
+                    "temp": temp,
+                    "date": datetime.now().date().isoformat(),
+                }
+        return {"condition": "晴", "temp": 20, "date": datetime.now().date().isoformat()}
+
+    async def _fetch_weather(self, city: str) -> dict:
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                resp = await client.get(f"https://wttr.in/{city}?format=j1")
+                data = resp.json()
+                cond_raw = data["current_condition"][0]["weatherDesc"][0]["value"]
+                temp = int(data["current_condition"][0]["temp_C"])
+                return {
+                    "condition": self._map_weather_condition(cond_raw),
+                    "temp": temp,
+                    "date": datetime.now().date().isoformat(),
+                }
+        except Exception as e:
+            logger.warning(f"[LifeSim] 天气获取失败 ({city}): {e}")
+            return self._season_default_weather()
+
     def _update_yearago(self, hour: float) -> None:
         """每次 tick 更新猫咪状态（纯规则，无 LLM）"""
         self._yearago_ticks_since_change += 1

@@ -110,7 +110,6 @@ def test_season_default_weather_spring():
     sim = make_sim()
     with patch("life_simulator.datetime") as mock_dt:
         mock_dt.now.return_value = datetime(2026, 4, 15)
-        mock_dt.now.return_value.date.return_value = date(2026, 4, 15)
         w = sim._season_default_weather()
     assert w["condition"] == "多云"
     assert w["temp"] == 18
