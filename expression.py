@@ -181,12 +181,30 @@ class ExpressionSynthesizer:
         else:
             proactive_context = ""
 
+        # ---- 人设特质 ----
+        interests_str = "、".join(self.persona.get("interests", []))
+        mbti = self.persona.get("mbti", "")
+        _mbti_desc = {
+            "ENFP": "热情开放、充满好奇心、喜欢分享、容易被新事物吸引",
+            "INFP": "理想主义、善解人意、内敛但情感深厚",
+            "ENFJ": "热情有感染力、善于倾听、天生领导者",
+            "INTJ": "独立理性、目标明确、不喜欢废话",
+        }
+        mbti_desc = _mbti_desc.get(mbti, "")
+        trait_section = (
+            f"## 你的特质\n"
+            f"年龄：{self.persona.get('age', '')}岁\n"
+            f"MBTI：{mbti}{'（' + mbti_desc + '）' if mbti_desc else ''}\n"
+            f"兴趣：{interests_str}\n"
+        )
+
         # ---- 最终 prompt ----
         prompt = f"""你是{self.persona['name']}，一个真实的人在用手机聊天。
 
 ## 你是谁
 {self.persona['background']}
 
+{trait_section}
 ## 此刻状态
 时间：{now.strftime("%H:%M")}（{'工作日' if now.weekday() < 5 else '周末'}）
 正在做：{life_status['current_action']} @ {life_status['location']}
