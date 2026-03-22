@@ -688,3 +688,11 @@ def test_schedule_annotation_uses_config_not_hardcoded():
     assert "上班时间约8-9" in hints   # custom work_start
     assert "下班约17-18" in hints     # custom work_end
     assert "午饭约12-13" in hints     # custom lunch
+
+
+def test_weekday_fallback_hint_also_gets_schedule_annotation():
+    """Hour outside all pool ranges still gets schedule annotation on weekdays."""
+    sim = _make_sim_with_schedule()
+    hints = sim._get_activity_hints(5.0, is_weekday=True)
+    assert "发呆" in hints                  # fallback base_hint
+    assert "上班时间约9-10" in hints        # schedule still appended
