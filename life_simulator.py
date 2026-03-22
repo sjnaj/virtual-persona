@@ -200,6 +200,39 @@ notable=true表示这件事她可能想跟朋友说。shareable_thought是她想
             self.physical.sleep_debt = max(0, self.physical.sleep_debt - 2)
         self.physical.clamp()
 
+    # ── 行为多样性 ────────────────────────────────────────────────────────────
+
+    _ACTIVITY_POOL_WEEKDAY = [
+        (7,  9,  "起床洗漱、吃早饭、通勤"),
+        (9,  12, "开会、做设计、摸鱼、喝咖啡"),
+        (12, 14, "吃午饭、午休、散步"),
+        (14, 18, "做设计、改稿、摸鱼、下午茶"),
+        (18, 20, "通勤回家、买晚饭、做饭"),
+        (20, 24, "看剧、刷手机、练字、洗澡、陪年糕玩、发呆"),
+    ]
+
+    _ACTIVITY_POOL_WEEKEND = [
+        (7,  10, "睡懒觉、赖床、慢慢起床"),
+        (10, 12, "吃早午饭、逛超市、出门买奶茶"),
+        (12, 18, "出门逛街、做美甲、看展、朋友聚餐、午睡"),
+        (18, 24, "买晚饭、看综艺、刷视频、洗澡、和朋友聊天"),
+    ]
+
+    def _get_activity_blacklist(self) -> list:
+        if not self.event_log:
+            return []
+        window = self.event_log[-min(8, len(self.event_log)):]
+        counts = Counter(e.action for e in window)
+        return [action for action, cnt in counts.items() if cnt >= 2]
+
+    def _get_activity_hints(self, hour: float, is_weekday: bool) -> str:
+        pool = self._ACTIVITY_POOL_WEEKDAY if is_weekday else self._ACTIVITY_POOL_WEEKEND
+        h = int(hour) % 24
+        for start, end, hints in pool:
+            if start <= h < end:
+                return hints
+        return "发呆、刷手机、失眠"
+
     # ── 年糕状态 ──────────────────────────────────────────────────────────────
 
     _YEARAGO_MOODS_BY_HOUR = [
