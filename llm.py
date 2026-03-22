@@ -86,3 +86,59 @@ class LLMClient:
                     pass
             logger.error(f"Failed to parse JSON: {raw[:200]}")
             return {}
+
+    async def call_vision(
+        self,
+        prompt: str,
+        images: list = None,
+        tier: str = "expression",
+        system_prompt: str = "",
+        temperature: float = 0.85,
+        max_tokens: int = 2000,
+    ) -> str:
+        """Send a multimodal request (text + base64 images). Falls back to plain
+        text call when images is empty or None."""
+        if not images:
+            return await self.call(
+                prompt, tier=tier, system_prompt=system_prompt,
+                temperature=temperature, max_tokens=max_tokens,
+            )
+
+        client = self.expression_client if tier == "expression" else self.utility_client
+        model = self.expression_model if tier == "expression" else self.utility_model
+
+        content = [{"type": "text", "text": prompt}]
+        for img in images:
+            content.append({
+                "type": "image_url",
+                "image_url": {"url": f"data:{img['mime_type']};base64,{img['base64']}"},
+            })
+
+        messages = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": content})
+
+        logger.debug(
+            "[LLM-IN] tier=%s model=%s vision=True images=%d",
+            tier, model, len(images),
+        )
+
+        for attempt in range(3):
+            try:
+                resp = await client.chat.completions.create(
+                    model=model,
+                    messages=messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    timeout=30,
+                )
+                output = resp.choices[0].message.content.strip()
+                logger.debug("[LLM-OUT] tier=%s\n%s", tier, output)
+                return output
+            except Exception as e:
+                logger.warning(f"LLM vision call failed (attempt {attempt+1}): {e}")
+                if attempt < 2:
+                    await asyncio.sleep(2 ** attempt)
+
+        return ""
