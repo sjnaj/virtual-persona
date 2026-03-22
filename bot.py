@@ -453,7 +453,15 @@ class VirtualPersonaBot:
         await self.orch.stop()
 
     def run(self):
-        app = Application.builder().token(self.bot_token).post_init(self._post_init).post_shutdown(self._post_shutdown).build()
+        app = (
+            Application.builder()
+            .token(self.bot_token)
+            .get_updates_connection_pool_size(4)
+            .get_updates_pool_timeout(10.0)
+            .post_init(self._post_init)
+            .post_shutdown(self._post_shutdown)
+            .build()
+        )
 
         # 命令处理
         app.add_handler(CommandHandler("start", self._cmd_start))

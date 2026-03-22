@@ -43,6 +43,28 @@ def setup_logging(log_dir: str = "log"):
     root.addHandler(info_handler)
     root.addHandler(warn_handler)
 
+    # File: LLM input/output debug log — DEBUG and above, llm module only
+    llm_handler = logging.FileHandler(
+        os.path.join(log_dir, "llm.log"), mode="a", encoding="utf-8"
+    )
+    llm_handler.setLevel(logging.DEBUG)
+    llm_handler.setFormatter(file_fmt)
+    llm_logger = logging.getLogger("llm")
+    llm_logger.setLevel(logging.DEBUG)
+    llm_logger.addHandler(llm_handler)
+    llm_logger.propagate = False  # don't bubble up to root (keeps stdout clean)
+
+    # File: event bus debug log — DEBUG and above, event_bus module only
+    bus_handler = logging.FileHandler(
+        os.path.join(log_dir, "events.log"), mode="a", encoding="utf-8"
+    )
+    bus_handler.setLevel(logging.DEBUG)
+    bus_handler.setFormatter(file_fmt)
+    bus_logger = logging.getLogger("event_bus")
+    bus_logger.setLevel(logging.DEBUG)
+    bus_logger.addHandler(bus_handler)
+    bus_logger.propagate = False
+
     # Suppress noisy third-party libraries
     for name in ["httpx", "openai", "telegram", "httpcore", "chromadb"]:
         logging.getLogger(name).setLevel(logging.WARNING)

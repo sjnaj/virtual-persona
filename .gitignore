@@ -12,6 +12,7 @@ __pycache__/
 # Data (ChromaDB, relationships)
 data/chroma/
 data/relationships.json
+data/inner_state.json
 test
 log
 # Env / secrets

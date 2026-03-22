@@ -52,10 +52,18 @@ class LLMClient:
         if json_mode:
             kwargs["response_format"] = {"type": "json_object"}
 
+        logger.debug(
+            "[LLM-IN] tier=%s model=%s temp=%.2f\n%s",
+            tier, model, temperature,
+            "\n---\n".join(f"[{m['role']}] {m['content']}" for m in messages),
+        )
+
         for attempt in range(3):
             try:
                 resp = await client.chat.completions.create(**kwargs, timeout=30)
-                return resp.choices[0].message.content.strip()
+                output = resp.choices[0].message.content.strip()
+                logger.debug("[LLM-OUT] tier=%s\n%s", tier, output)
+                return output
             except Exception as e:
                 logger.warning(f"LLM call failed (attempt {attempt+1}): {e}")
                 if attempt < 2:

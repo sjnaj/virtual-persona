@@ -184,10 +184,11 @@ class RelationshipManager:
 - 你给ta的标签：{current_tags}
 - 常聊话题：{current_topics}
 
-最近的对话：
+最近的对话（"你"是你自己说的话，"{prof.display_name}"是对方说的话）：
 {recent_convo[:1500]}
 
-以你（{self.persona['name']}）的主观视角，更新你对ta的印象：
+以你（{self.persona['name']}）的主观视角，更新你对ta的印象。
+注意：new_tags 只能根据对方自己说的内容、提问、表达方式来推断ta的身份/职业/性格，不能把你自己说的内容误归为对方的特征，更新tag里面和对话内容明显冲突的地方。
 
 输出JSON：
 {{

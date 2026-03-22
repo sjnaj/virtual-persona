@@ -39,8 +39,10 @@ class ProactiveEngine:
     async def _on_interesting_content(self, event):
         self.pending_triggers.append({
             "type": "content_share",
-            "urgency": 0.4,
+            "urgency": 0.55,
             "content": event.data.get("share_text", ""),
+            "seen_content": event.data.get("content", ""),
+            "reaction": event.data.get("reaction", ""),
             "source": "browser",
             "time": datetime.now(),
         })

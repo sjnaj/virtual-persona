@@ -77,6 +77,9 @@ class Orchestrator:
         # 主动消息回调: chat_id → callback
         self.proactive_callbacks: Dict[int, Callable] = {}
 
+        # 后台任务句柄（用于 stop 时取消）
+        self._tasks: list = []
+
     def set_proactive_callback(self, chat_id: int, callback: Callable):
         self.proactive_callbacks[chat_id] = callback
 
@@ -154,7 +157,8 @@ class Orchestrator:
         # 8. 更新关系
         # 简单情感分析（后续可以用更精细的）
         sentiment = 0.1  # 默认微正
-        await self.relationships.update_after_conversation(user_id, text, sentiment)
+        recent_convo = self.chat_ctx.get_recent_context(chat_id, limit=20)
+        await self.relationships.update_after_conversation(user_id, recent_convo, sentiment)
 
         return messages
 
@@ -268,16 +272,23 @@ class Orchestrator:
 
     async def start_background_tasks(self):
         self.running = True
-        asyncio.create_task(self._life_tick_loop())
-        asyncio.create_task(self._browse_loop())
-        asyncio.create_task(self._proactive_loop())
-        asyncio.create_task(self._memory_loop())
-        asyncio.create_task(self._conversation_end_check_loop())
-        asyncio.create_task(self._inner_state_loop())
+        self._tasks = [
+            asyncio.create_task(self._life_tick_loop()),
+            asyncio.create_task(self._browse_loop()),
+            asyncio.create_task(self._proactive_loop()),
+            asyncio.create_task(self._memory_loop()),
+            asyncio.create_task(self._conversation_end_check_loop()),
+            asyncio.create_task(self._inner_state_loop()),
+        ]
         logger.info("[Orchestrator] 后台任务已启动")
 
     async def stop(self):
         self.running = False
+        for task in self._tasks:
+            task.cancel()
+        if self._tasks:
+            await asyncio.gather(*self._tasks, return_exceptions=True)
+        self._tasks.clear()
         await self.memory.consolidate()
 
     def get_full_status(self):

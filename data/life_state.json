@@ -1,0 +1,106 @@
+{
+  "physical": {
+    "energy": 73.0,
+    "hunger": 100,
+    "comfort": 70.0,
+    "sleep_debt": 0
+  },
+  "location": "家",
+  "current_action": "刷手机",
+  "current_detail": "看微博",
+  "is_sleeping": false,
+  "woke_up_today": true,
+  "daily_weather": {
+    "condition": "晴",
+    "temp": 22,
+    "date": "2026-03-22"
+  },
+  "yearago": {
+    "location": "厨房",
+    "mood": "讨食"
+  },
+  "yearago_ticks": 0,
+  "event_log": [
+    {
+      "time": "10:00",
+      "action": "刷小红书",
+      "location": "家",
+      "detail": "",
+      "mood_impact": 0,
+      "energy_change": -2,
+      "notable": false,
+      "shareable_thought": null
+    },
+    {
+      "time": "10:00",
+      "action": "刷小红书",
+      "location": "家",
+      "detail": "",
+      "mood_impact": 0,
+      "energy_change": -2,
+      "notable": false,
+      "shareable_thought": null
+    },
+    {
+      "time": "10:00",
+      "action": "刷小红书",
+      "location": "家",
+      "detail": "",
+      "mood_impact": 0,
+      "energy_change": -2,
+      "notable": false,
+      "shareable_thought": null
+    },
+    {
+      "time": "15:00",
+      "action": "做设计",
+      "location": "公司",
+      "detail": "在改稿",
+      "mood_impact": 1,
+      "energy_change": -2,
+      "notable": false,
+      "shareable_thought": null
+    },
+    {
+      "time": "15:00",
+      "action": "做设计",
+      "location": "公司",
+      "detail": "在改稿",
+      "mood_impact": 1,
+      "energy_change": -2,
+      "notable": false,
+      "shareable_thought": null
+    },
+    {
+      "time": "15:00",
+      "action": "做设计",
+      "location": "公司",
+      "detail": "在改稿",
+      "mood_impact": 1,
+      "energy_change": -2,
+      "notable": false,
+      "shareable_thought": null
+    },
+    {
+      "time": "18:00",
+      "action": "做设计",
+      "location": "公司",
+      "detail": "在改稿",
+      "mood_impact": 1,
+      "energy_change": -2,
+      "notable": false,
+      "shareable_thought": null
+    },
+    {
+      "time": "07:30",
+      "action": "刷手机",
+      "location": "家",
+      "detail": "看微博",
+      "mood_impact": 0,
+      "energy_change": -2,
+      "notable": false,
+      "shareable_thought": null
+    }
+  ],
+  "saved_at": "2026-03-22T13:28:06.703079"
+}

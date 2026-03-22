@@ -164,6 +164,23 @@ class ExpressionSynthesizer:
             if rel_prof.attraction > 0.5:
                 style_addon += " 你对ta有好感，说话会有点在意形象。"
 
+        # ---- 主动触发上下文 ----
+        if proactive_trigger:
+            ttype = proactive_trigger.get("type", "")
+            if ttype == "content_share":
+                seen = proactive_trigger.get("seen_content", "")
+                reaction = proactive_trigger.get("reaction", "")
+                share_how = proactive_trigger.get("content", "")
+                proactive_context = (
+                    f"你刚才刷手机看到：{seen}\n"
+                    f"你的第一反应：{reaction}\n"
+                    f"你想分享给对方，大概会这么说：{share_how}"
+                )
+            else:
+                proactive_context = f"原因：{proactive_trigger.get('content', '')}"
+        else:
+            proactive_context = ""
+
         # ---- 最终 prompt ----
         prompt = f"""你是{self.persona['name']}，一个真实的人在用手机聊天。
 
@@ -193,7 +210,7 @@ class ExpressionSynthesizer:
 {browsing_text}
 
 ## {'对方发来' if user_message else '你想主动说'}
-{'"' + user_message + '"' if user_message else f"原因：{proactive_trigger.get('content', '')}"}
+{'"' + user_message + '"' if user_message else proactive_context}
 
 ## 输出要求
 1. 用 ||| 分隔多条消息

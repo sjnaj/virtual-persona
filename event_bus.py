@@ -34,6 +34,7 @@ class EventBus:
             self._event_log = self._event_log[-500:]
 
         callbacks = self._subscribers.get(event_name, [])
+        logger.debug("[EVENT] %s subscribers=%d data=%s", event_name, len(callbacks), data)
         for cb in callbacks:
             try:
                 if asyncio.iscoroutinefunction(cb):
