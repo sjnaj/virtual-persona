@@ -68,6 +68,10 @@ class LifeSimulator:
         self.yearago: YearGaoState = YearGaoState()
         self._yearago_ticks_since_change: int = 0
 
+        self.daily_weather: dict = {}
+        self._state_path: Path = Path("data/life_state.json")
+        self._load_state()
+
     async def tick(self):
         now = datetime.now()
         hour = now.hour + now.minute / 60.0
@@ -188,6 +192,86 @@ notable=true表示这件事她可能想跟朋友说。shareable_thought是她想
             logger.info(f"[LifeSim] 值得分享的事件: {event.shareable_thought}")
 
         logger.debug(f"[LifeSim] {now.strftime('%H:%M')} | {self.current_action} @ {self.location} | 体力={self.physical.energy:.0f} 饥饿={self.physical.hunger:.0f}")
+
+    # ── 状态持久化 ────────────────────────────────────────────────────────────
+
+    def _load_state(self) -> None:
+        """同步读取持久化状态（__init__ 中调用）"""
+        try:
+            text = self._state_path.read_text(encoding="utf-8")
+            state = json.loads(text)
+        except FileNotFoundError:
+            return
+        except Exception as e:
+            logger.warning(f"[LifeSim] 加载状态失败，使用默认值: {e}")
+            return
+
+        try:
+            saved_at = datetime.fromisoformat(state["saved_at"])
+            if (datetime.now() - saved_at).total_seconds() > 86400:
+                logger.info("[LifeSim] 状态超过 24h，重置")
+                return
+        except Exception:
+            return
+
+        ph = state.get("physical", {})
+        self.physical.energy     = float(ph.get("energy",     self.physical.energy))
+        self.physical.hunger     = float(ph.get("hunger",     self.physical.hunger))
+        self.physical.comfort    = float(ph.get("comfort",    self.physical.comfort))
+        self.physical.sleep_debt = float(ph.get("sleep_debt", self.physical.sleep_debt))
+        self.physical.clamp()
+
+        self.location       = state.get("location",       self.location)
+        self.current_action = state.get("current_action", self.current_action)
+        self.current_detail = state.get("current_detail", self.current_detail)
+        self.is_sleeping    = state.get("is_sleeping",    self.is_sleeping)
+        self.woke_up_today  = state.get("woke_up_today",  self.woke_up_today)
+        self.daily_weather  = state.get("daily_weather",  self.daily_weather)
+
+        yg = state.get("yearago")
+        if yg:
+            try:
+                self.yearago = YearGaoState(**yg)
+            except Exception:
+                pass
+        self._yearago_ticks_since_change = state.get("yearago_ticks", 0)
+
+        raw_log = state.get("event_log", [])
+        reconstructed = []
+        for d in raw_log:
+            try:
+                reconstructed.append(LifeEvent(**d))
+            except Exception:
+                pass
+        self.event_log = reconstructed
+
+        logger.info(f"[LifeSim] 状态已恢复: {self.current_action} @ {self.location}")
+
+    def _save_state(self) -> None:
+        """调度异步保存，不阻塞 tick"""
+        import asyncio
+        asyncio.create_task(self._do_save())
+
+    async def _do_save(self, path: "Path | None" = None) -> None:
+        target = path or self._state_path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        data = {
+            "physical":       dataclasses.asdict(self.physical),
+            "location":       self.location,
+            "current_action": self.current_action,
+            "current_detail": self.current_detail,
+            "is_sleeping":    self.is_sleeping,
+            "woke_up_today":  self.woke_up_today,
+            "daily_weather":  self.daily_weather,
+            "yearago":        dataclasses.asdict(self.yearago),
+            "yearago_ticks":  self._yearago_ticks_since_change,
+            "event_log":      [dataclasses.asdict(e) for e in self.event_log[-25:]],
+            "saved_at":       datetime.now().isoformat(),
+        }
+        target.write_text(
+            json.dumps(data, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
 
     def _passive_updates(self, hour: float):
         """被动的生理变化"""
