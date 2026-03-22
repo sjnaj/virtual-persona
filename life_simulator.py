@@ -155,8 +155,7 @@ class LifeSimulator:
 最近几个动作：{recent_actions}
 
 她的职业：{self.persona.get('occupation', '')}
-她的兴趣爱好：{interests_str}
-她的性格：外向{self.persona['personality']['extraversion']:.1f} 自律{self.persona['personality']['conscientiousness']:.1f}
+{"她的兴趣爱好：" + interests_str + chr(10) if interests_str else ""}她的性格：外向{self.persona['personality']['extraversion']:.1f} 自律{self.persona['personality']['conscientiousness']:.1f}
 
 基于以上信息，她接下来15分钟最可能做什么？
 要求：

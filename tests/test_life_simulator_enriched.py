@@ -559,7 +559,6 @@ def test_get_status_includes_weather_and_yearago():
 def _make_tick_sim_with_interests():
     from life_simulator import LifeSimulator
     from event_bus import EventBus
-    from unittest.mock import patch
     bus = EventBus()
     persona = {
         "name": "测试",
