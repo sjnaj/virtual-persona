@@ -61,20 +61,63 @@ class VirtualPersonaBot:
         else:
             return not self.allowed_groups or chat_id in self.allowed_groups
 
-    async def _download_and_encode(self, bot, file_id: str, label: str) -> dict | None:
-        """Download a Telegram file and return a base64 media dict. Returns None on error."""
+    async def _extract_first_frame(self, video_bytes: bytes) -> bytes | None:
+        """Extract the first frame from an MP4/WebM file as JPEG bytes using ffmpeg.
+        Returns None if ffmpeg is unavailable or extraction fails."""
+        import os, tempfile
+        input_path = None
+        output_path = None
+        try:
+            with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as f:
+                f.write(video_bytes)
+                input_path = f.name
+            output_path = input_path + "_frame.jpg"
+            proc = await asyncio.create_subprocess_exec(
+                "ffmpeg", "-i", input_path,
+                "-vframes", "1", "-q:v", "2",
+                output_path, "-y",
+                stdout=asyncio.subprocess.DEVNULL,
+                stderr=asyncio.subprocess.DEVNULL,
+            )
+            await asyncio.wait_for(proc.communicate(), timeout=15)
+            if proc.returncode == 0 and os.path.exists(output_path):
+                with open(output_path, "rb") as f:
+                    return f.read()
+            logger.warning(f"[Bot] ffmpeg 返回错误码 {proc.returncode}")
+        except FileNotFoundError:
+            logger.warning("[Bot] ffmpeg 未安装，无法提取视频帧")
+        except Exception as e:
+            logger.warning(f"[Bot] 帧提取失败: {e}")
+        finally:
+            for p in (input_path, output_path):
+                if p:
+                    try:
+                        os.unlink(p)
+                    except OSError:
+                        pass
+        return None
+
+    async def _download_and_encode(self, bot, file_id: str, label: str,
+                                    extract_frame: bool = False) -> dict | None:
+        """Download a Telegram file and return a base64 media dict.
+        If extract_frame=True, run ffmpeg to get the first video frame as JPEG.
+        Returns None on error."""
         try:
             tg_file = await bot.get_file(file_id)
-            data = await tg_file.download_as_bytearray()
-            b64 = base64.b64encode(bytes(data)).decode()
+            data = bytes(await tg_file.download_as_bytearray())
+            if extract_frame:
+                frame = await self._extract_first_frame(data)
+                if frame is None:
+                    return None
+                return {"mime_type": "image/jpeg", "base64": base64.b64encode(frame).decode(), "label": label}
             mime = "image/webp" if label == "sticker" else "image/jpeg"
-            return {"mime_type": mime, "base64": b64, "label": label}
+            return {"mime_type": mime, "base64": base64.b64encode(data).decode(), "label": label}
         except Exception as e:
             logger.warning(f"[Bot] 媒体下载失败 ({label}): {e}")
             return None
 
     async def _handle_media_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Handle photo and static sticker messages."""
+        """Handle photo, static sticker, animation (first frame), and video sticker (first frame)."""
         if not update.message or not update.effective_user:
             return
 
@@ -107,17 +150,28 @@ class VirtualPersonaBot:
 
         file_id = None
         label = "photo"
+        extract_frame = False
         if update.message.photo:
             file_id = update.message.photo[-1].file_id
             label = "photo"
-        elif update.message.sticker and not update.message.sticker.is_animated \
-                and not update.message.sticker.is_video:
-            file_id = update.message.sticker.file_id
-            label = "sticker"
+        elif update.message.sticker:
+            sticker = update.message.sticker
+            if sticker.is_video:
+                file_id = sticker.file_id
+                label = "sticker"
+                extract_frame = True
+            elif not sticker.is_animated:
+                file_id = sticker.file_id
+                label = "sticker"
+        elif update.message.animation:
+            file_id = update.message.animation.file_id
+            label = "photo"
+            extract_frame = True
 
         media = None
         if file_id:
-            enc = await self._download_and_encode(context.bot, file_id, label)
+            enc = await self._download_and_encode(context.bot, file_id, label,
+                                                   extract_frame=extract_frame)
             if enc:
                 media = [enc]
 
@@ -157,7 +211,7 @@ class VirtualPersonaBot:
     async def _handle_decline_media_message(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ):
-        """Handle animation, video, video_note, animated/video sticker — decline politely."""
+        """Handle video, video_note, animated sticker (.tgs/Lottie) — decline politely."""
         if not update.message or not update.effective_user:
             return
 
@@ -617,15 +671,16 @@ class VirtualPersonaBot:
             self._handle_message,
         ))
 
-        # 图片 + 静态表情包 → 视觉理解
+        # 图片 + 静态/动态表情包 + 动图 → 视觉理解（动图/video sticker 截取第一帧）
         app.add_handler(MessageHandler(
-            (filters.PHOTO | filters.Sticker.STATIC) & ~filters.COMMAND,
+            (filters.PHOTO | filters.Sticker.STATIC | filters.Sticker.VIDEO
+             | filters.ANIMATION) & ~filters.COMMAND,
             self._handle_media_message,
         ))
-        # 视频 / 动图 / 动态表情包 → 礼貌拒绝
+        # 普通视频 / 圆形视频 / .tgs 动态贴纸（Lottie，无法提取帧）→ 礼貌拒绝
         app.add_handler(MessageHandler(
-            (filters.VIDEO | filters.ANIMATION | filters.VIDEO_NOTE
-             | filters.Sticker.ANIMATED | filters.Sticker.VIDEO) & ~filters.COMMAND,
+            (filters.VIDEO | filters.VIDEO_NOTE
+             | filters.Sticker.ANIMATED) & ~filters.COMMAND,
             self._handle_decline_media_message,
         ))
 

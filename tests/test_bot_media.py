@@ -210,3 +210,111 @@ def test_mentioned_me_detected_from_caption():
 
     call_kwargs = bot_obj.orch.handle_message.call_args.kwargs
     assert call_kwargs.get("mentioned_me") is True
+
+
+# ===== Frame extraction tests =====
+
+def _make_animation_update(caption=None, chat_type="private"):
+    update = MagicMock()
+    update.message = MagicMock()
+    update.effective_user = MagicMock()
+    update.effective_user.id = 1
+    update.effective_user.is_bot = False
+    update.effective_user.first_name = "小明"
+    update.effective_user.last_name = None
+    update.effective_chat = MagicMock()
+    update.effective_chat.id = 1
+    update.effective_chat.type = chat_type
+    update.effective_chat.title = ""
+    update.message.photo = None
+    update.message.sticker = None
+    update.message.animation = MagicMock()
+    update.message.animation.file_id = "anim_file_id"
+    update.message.caption = caption
+    update.message.reply_to_message = None
+    update.message.message_id = 44
+    return update
+
+
+def test_animation_calls_extract_frame():
+    """Animation messages call _extract_first_frame and send result as jpeg."""
+    bot_obj = _make_bot()
+    update = _make_animation_update()
+
+    fake_mp4 = b"\x00\x00\x00\x18ftyp"  # fake MP4 bytes
+    fake_jpeg = b"\xff\xd8\xff\xe0extracted_frame"
+    expected_b64 = base64.b64encode(fake_jpeg).decode()
+
+    async def fake_get_file(file_id):
+        f = MagicMock()
+        f.download_as_bytearray = AsyncMock(return_value=bytearray(fake_mp4))
+        return f
+
+    async def fake_extract(self_inner, video_bytes):
+        return fake_jpeg
+
+    ctx = MagicMock()
+    ctx.bot.get_file = fake_get_file
+    ctx.bot.send_message = AsyncMock()
+    ctx.bot.send_chat_action = AsyncMock()
+
+    import bot as bot_module
+    original = bot_module.VirtualPersonaBot._extract_first_frame
+    bot_module.VirtualPersonaBot._extract_first_frame = fake_extract
+
+    try:
+        asyncio.run(bot_obj._handle_media_message(update, ctx))
+    finally:
+        bot_module.VirtualPersonaBot._extract_first_frame = original
+
+    bot_obj.orch.handle_message.assert_called_once()
+    call_kwargs = bot_obj.orch.handle_message.call_args.kwargs
+    media = call_kwargs.get("media")
+    assert media is not None and len(media) == 1
+    assert media[0]["mime_type"] == "image/jpeg"
+    assert media[0]["base64"] == expected_b64
+
+
+def test_animation_frame_extraction_failure_proceeds_without_media():
+    """If frame extraction fails, orchestrator is called with media=None."""
+    bot_obj = _make_bot()
+    update = _make_animation_update()
+
+    async def fake_get_file(file_id):
+        f = MagicMock()
+        f.download_as_bytearray = AsyncMock(return_value=bytearray(b"\x00"))
+        return f
+
+    async def fake_extract(self_inner, video_bytes):
+        return None  # extraction failed
+
+    ctx = MagicMock()
+    ctx.bot.get_file = fake_get_file
+    ctx.bot.send_message = AsyncMock()
+    ctx.bot.send_chat_action = AsyncMock()
+
+    import bot as bot_module
+    original = bot_module.VirtualPersonaBot._extract_first_frame
+    bot_module.VirtualPersonaBot._extract_first_frame = fake_extract
+
+    try:
+        asyncio.run(bot_obj._handle_media_message(update, ctx))
+    finally:
+        bot_module.VirtualPersonaBot._extract_first_frame = original
+
+    call_kwargs = bot_obj.orch.handle_message.call_args.kwargs
+    assert call_kwargs.get("media") is None
+
+
+def test_extract_first_frame_returns_none_when_ffmpeg_missing():
+    """_extract_first_frame returns None gracefully when ffmpeg is not found."""
+    bot_obj = _make_bot()
+
+    async def run_test():
+        import unittest.mock as um
+        with um.patch("asyncio.create_subprocess_exec",
+                      side_effect=FileNotFoundError("ffmpeg not found")):
+            return await bot_obj._extract_first_frame(b"\x00\x01\x02")
+
+    result = asyncio.run(run_test())
+    assert result is None
