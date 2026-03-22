@@ -339,6 +339,14 @@ def test_save_and_load_round_trip(tmp_path):
     assert sim2.event_log[0].action == "做设计"
 
 
+def _make_sim_no_load():
+    """make_sim but suppress the _load_state() call inside __init__."""
+    from life_simulator import LifeSimulator
+    with patch.object(LifeSimulator, '_load_state', lambda self: None):
+        sim = make_sim()
+    return sim
+
+
 def test_load_state_stale_file_uses_defaults(tmp_path):
     stale_time = (datetime.now() - timedelta(hours=25)).isoformat()
     state_file = tmp_path / "life_state.json"
@@ -356,7 +364,7 @@ def test_load_state_stale_file_uses_defaults(tmp_path):
         "saved_at": stale_time,
     }))
 
-    sim = make_sim()
+    sim = _make_sim_no_load()
     sim._state_path = state_file
     sim._load_state()
 
@@ -365,7 +373,7 @@ def test_load_state_stale_file_uses_defaults(tmp_path):
 
 
 def test_load_state_missing_file_uses_defaults(tmp_path):
-    sim = make_sim()
+    sim = _make_sim_no_load()
     sim._state_path = tmp_path / "nonexistent.json"
     sim._load_state()
     assert sim.physical.energy == 80.0
@@ -375,7 +383,7 @@ def test_load_state_corrupt_json_uses_defaults(tmp_path):
     state_file = tmp_path / "life_state.json"
     state_file.write_text("not valid json {{{")
 
-    sim = make_sim()
+    sim = _make_sim_no_load()
     sim._state_path = state_file
     sim._load_state()
 
@@ -447,7 +455,6 @@ def test_tick_calls_update_yearago():
     async def run():
         with patch("life_simulator.datetime") as mock_dt:
             mock_dt.now.return_value = datetime(2026, 3, 22, 15, 0)
-            mock_dt.now.return_value.date.return_value = date(2026, 3, 22)
             await sim.tick()
     asyncio.run(run())
     assert len(called) >= 1
@@ -469,7 +476,6 @@ def test_tick_prompt_contains_blacklisted_action():
     async def run():
         with patch("life_simulator.datetime") as mock_dt:
             mock_dt.now.return_value = datetime(2026, 3, 22, 15, 0)
-            mock_dt.now.return_value.date.return_value = date(2026, 3, 22)
             await sim.tick()
     asyncio.run(run())
 
@@ -489,7 +495,6 @@ def test_tick_prompt_contains_activity_hints():
     async def run():
         with patch("life_simulator.datetime") as mock_dt:
             mock_dt.now.return_value = datetime(2026, 3, 22, 15, 0)
-            mock_dt.now.return_value.date.return_value = date(2026, 3, 22)
             await sim.tick()
     asyncio.run(run())
     assert any("时间段" in p or "比较可能" in p for p in captured_prompts)
@@ -508,7 +513,6 @@ def test_tick_prompt_contains_real_weather():
     async def run():
         with patch("life_simulator.datetime") as mock_dt:
             mock_dt.now.return_value = datetime(2026, 3, 22, 15, 0)
-            mock_dt.now.return_value.date.return_value = date(2026, 3, 22)
             await sim.tick()
     asyncio.run(run())
     assert any("小雨" in p for p in captured_prompts)
@@ -528,7 +532,6 @@ def test_tick_prompt_contains_yearago():
     async def run():
         with patch("life_simulator.datetime") as mock_dt:
             mock_dt.now.return_value = datetime(2026, 3, 22, 18, 0)
-            mock_dt.now.return_value.date.return_value = date(2026, 3, 22)
             await sim.tick()
     asyncio.run(run())
     assert any("年糕" in p for p in captured_prompts)

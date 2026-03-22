@@ -76,6 +76,15 @@ class LifeSimulator:
         now = datetime.now()
         hour = now.hour + now.minute / 60.0
 
+        # 更新年糕状态（每次 tick 都更新，包括睡眠中）
+        self._update_yearago(hour)
+
+        # 确保今日天气已获取
+        today = now.date().isoformat()
+        if self.daily_weather.get("date") != today:
+            city = self.persona.get("city", "北京")
+            self.daily_weather = await self._fetch_weather(city)
+
         # 基础生理消耗
         self._passive_updates(hour)
 
@@ -98,7 +107,6 @@ class LifeSimulator:
         # 到了深夜，判断是否该睡
         sleep_range = self.persona.get("daily_patterns", {}).get("sleep", [23, 25])
         sleep_hour = sleep_range[0] + random.uniform(0, sleep_range[1] - sleep_range[0])
-        # sleep_hour 可能超过 24（如 25 表示次日凌晨 1 点），需要折算
         if sleep_hour >= 24:
             should_sleep = hour >= 23 or hour < (sleep_hour - 24)
         else:
@@ -113,17 +121,34 @@ class LifeSimulator:
                 logger.info("[LifeSim] 睡了")
                 return
 
-        # 正常tick：让AI决定她在做什么
-        recent_actions = [e.action for e in self.event_log[-6:]]
+        # ── 构建行为多样性提示 ──
+        is_weekday = now.weekday() < 5
+        blacklist = self._get_activity_blacklist()
+        hints = self._get_activity_hints(hour, is_weekday)
 
-        prompt = f"""你是"{self.persona['name']}"的生活模拟器。现在是 {now.strftime("%Y-%m-%d %H:%M")} ({'工作日' if now.weekday() < 5 else '周末'})。
+        blacklist_text = ""
+        if blacklist:
+            blacklist_text = f"\n最近这些行为已经出现太多次了，这轮请避免选择：{blacklist}"
+
+        recent_actions = [e.action for e in self.event_log[-6:]]
+        weather_str = (
+            f"{self.daily_weather['condition']} {self.daily_weather['temp']}°C"
+            if self.daily_weather else "未知"
+        )
+        yearago_str = f"你的猫年糕现在：在{self.yearago.location}{self.yearago.mood}"
+        yearago_notable = ""
+        if self.yearago.mood in ("讨食", "暴走"):
+            yearago_notable = "\n（年糕现在比较闹腾，相关的事情比平时更值得分享）"
+
+        prompt = f"""你是"{self.persona['name']}"的生活模拟器。现在是 {now.strftime("%Y-%m-%d %H:%M")} ({'工作日' if is_weekday else '周末'})。
 
 当前状态：
 - 体力：{self.physical.energy:.0f}/100
 - 饥饿感：{self.physical.hunger:.0f}/100（越高越饿）
 - 位置：{self.location}
 - 上一个动作：{self.current_action}
-- 天气：晴 22°C（简化）
+- 今天天气：{weather_str}
+- {yearago_str}{yearago_notable}
 
 最近几个动作：{recent_actions}
 
@@ -135,7 +160,8 @@ class LifeSimulator:
 1. 大部分时候是平淡的日常，不要每次都有戏剧性事件
 2. 工作日白天应该在上班
 3. 考虑饥饿感（>60该吃饭了）、体力（<30会想休息）
-4. 偶尔可以有小事件（同事八卦、外卖好吃、猫做了什么等）
+4. 偶尔可以有小事件（同事八卦、外卖好吃、猫做了什么等）{blacklist_text}
+这个时间段她比较可能做的事情有：{hints}，也可以有其他合理安排。
 
 必须输出JSON：
 {{"action":"在做什么","location":"家/公司/通勤/外面","detail":"具体细节（一句话）","mood_impact":0,"energy_change":-2,"notable":false,"shareable_thought":null}}
@@ -152,12 +178,11 @@ notable=true表示这件事她可能想跟朋友说。shareable_thought是她想
         self.location = result.get("location", self.location)
         self.physical.energy += result.get("energy_change", -2)
 
-        # 饥饿感：根据当前行为独立更新，与 notable 无关
         eating_keywords = ["吃", "外卖", "午饭", "晚饭", "早饭", "餐"]
         if any(kw in self.current_action for kw in eating_keywords):
             self.physical.hunger -= 20
         else:
-            self.physical.hunger += 3  # 随时间变饿
+            self.physical.hunger += 3
 
         self.physical.clamp()
 
@@ -191,7 +216,14 @@ notable=true表示这件事她可能想跟朋友说。shareable_thought是她想
             })
             logger.info(f"[LifeSim] 值得分享的事件: {event.shareable_thought}")
 
-        logger.debug(f"[LifeSim] {now.strftime('%H:%M')} | {self.current_action} @ {self.location} | 体力={self.physical.energy:.0f} 饥饿={self.physical.hunger:.0f}")
+        logger.debug(
+            f"[LifeSim] {now.strftime('%H:%M')} | {self.current_action} @ {self.location}"
+            f" | 体力={self.physical.energy:.0f} 饥饿={self.physical.hunger:.0f}"
+            f" | 年糕:{self.yearago.mood}"
+        )
+
+        # 有效 tick：持久化状态
+        self._save_state()
 
     # ── 状态持久化 ────────────────────────────────────────────────────────────
 
@@ -399,7 +431,7 @@ notable=true表示这件事她可能想跟朋友说。shareable_thought是她想
     def _update_yearago(self, hour: float) -> None:
         """每次 tick 更新猫咪状态（纯规则，无 LLM）"""
         self._yearago_ticks_since_change += 1
-        if self._yearago_ticks_since_change < 2:
+        if self._yearago_ticks_since_change < 3:
             return
         if random.random() >= 0.35:
             return
@@ -436,4 +468,12 @@ notable=true表示这件事她可能想跟朋友说。shareable_thought是她想
                 {"time": e.time, "action": e.action, "detail": e.detail}
                 for e in self.event_log[-5:]
             ],
+            "weather": {
+                "condition": self.daily_weather.get("condition", "未知"),
+                "temp": self.daily_weather.get("temp", 0),
+            },
+            "yearago": {
+                "location": self.yearago.location,
+                "mood": self.yearago.mood,
+            },
         }

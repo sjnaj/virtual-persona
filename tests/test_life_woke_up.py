@@ -20,6 +20,8 @@ def make_sim(hour: float):
         "mood_impact": 0, "energy_change": -2, "notable": False, "shareable_thought": None
     })
     sim = LifeSimulator(persona, llm, bus)
+    from datetime import date
+    sim.daily_weather = {"condition": "晴", "temp": 22, "date": date.today().isoformat()}
     sim.is_sleeping = True
     sim.woke_up_today = False
     sim.physical.energy = 50
