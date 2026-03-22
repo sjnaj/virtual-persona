@@ -3,6 +3,7 @@
 支持：多用户私聊 + 群聊 + 管理员命令
 """
 import asyncio
+import base64
 import random
 import logging
 from datetime import datetime
@@ -16,6 +17,12 @@ from telegram.constants import ChatAction
 from telegram.error import TimedOut, NetworkError
 
 logger = logging.getLogger(__name__)
+
+_DECLINE_MEDIA = [
+    "这个我看不了哎～",
+    "视频/动图我这边显示不出来哈哈",
+    "嗯这个我打开不了，发图片给我吧",
+]
 
 
 def _retry_on_timeout(func):
@@ -53,6 +60,129 @@ class VirtualPersonaBot:
             return not self.allowed_users or user_id in self.allowed_users
         else:
             return not self.allowed_groups or chat_id in self.allowed_groups
+
+    async def _download_and_encode(self, bot, file_id: str, label: str) -> dict | None:
+        """Download a Telegram file and return a base64 media dict. Returns None on error."""
+        try:
+            tg_file = await bot.get_file(file_id)
+            data = await tg_file.download_as_bytearray()
+            b64 = base64.b64encode(bytes(data)).decode()
+            mime = "image/webp" if label == "sticker" else "image/jpeg"
+            return {"mime_type": mime, "base64": b64, "label": label}
+        except Exception as e:
+            logger.warning(f"[Bot] 媒体下载失败 ({label}): {e}")
+            return None
+
+    async def _handle_media_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Handle photo and static sticker messages."""
+        if not update.message or not update.effective_user:
+            return
+
+        user_id = update.effective_user.id
+        chat_id = update.effective_chat.id
+        chat_type = update.effective_chat.type
+
+        if not self._is_allowed(user_id, chat_id, chat_type):
+            return
+        if update.effective_user.is_bot:
+            return
+
+        user_name = (
+            update.effective_user.first_name or ""
+        ) + (
+            " " + (update.effective_user.last_name or "") if update.effective_user.last_name else ""
+        )
+        user_name = user_name.strip() or f"User{user_id}"
+
+        caption = update.message.caption or ""
+
+        mentioned_me = False
+        if self.bot_username and caption:
+            if f"@{self.bot_username}" in caption:
+                mentioned_me = True
+                caption = caption.replace(f"@{self.bot_username}", "").strip()
+        if update.message.reply_to_message and update.message.reply_to_message.from_user:
+            if update.message.reply_to_message.from_user.id == self.bot_id:
+                mentioned_me = True
+
+        file_id = None
+        label = "photo"
+        if update.message.photo:
+            file_id = update.message.photo[-1].file_id
+            label = "photo"
+        elif update.message.sticker and not update.message.sticker.is_animated \
+                and not update.message.sticker.is_video:
+            file_id = update.message.sticker.file_id
+            label = "sticker"
+
+        media = None
+        if file_id:
+            enc = await self._download_and_encode(context.bot, file_id, label)
+            if enc:
+                media = [enc]
+
+        group_title = ""
+        if chat_type in ("group", "supergroup"):
+            group_title = update.effective_chat.title or ""
+
+        logger.info(
+            f"[Bot] 媒体消息 | {user_name}({user_id}) | label={label} | "
+            f"caption={caption[:30]!r} | mentioned={mentioned_me}"
+        )
+
+        self.orch.set_proactive_callback(
+            chat_id,
+            lambda msgs, _cid=chat_id: self._send_messages(context.bot, _cid, msgs),
+        )
+
+        messages = await self.orch.handle_message(
+            text=caption,
+            user_id=user_id,
+            user_name=user_name,
+            chat_id=chat_id,
+            chat_type=chat_type,
+            group_title=group_title,
+            mentioned_me=mentioned_me,
+            media=media,
+        )
+
+        if messages is None:
+            return
+
+        await self._send_messages(
+            context.bot, chat_id, messages,
+            reply_to=update.message.message_id if chat_type != "private" else None,
+        )
+
+    async def _handle_decline_media_message(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ):
+        """Handle animation, video, video_note, animated/video sticker — decline politely."""
+        if not update.message or not update.effective_user:
+            return
+
+        user_id = update.effective_user.id
+        chat_id = update.effective_chat.id
+        chat_type = update.effective_chat.type
+
+        if not self._is_allowed(user_id, chat_id, chat_type):
+            return
+        if update.effective_user.is_bot:
+            return
+
+        if chat_type in ("group", "supergroup"):
+            caption = update.message.caption or ""
+            mentioned_me = False
+            if self.bot_username and f"@{self.bot_username}" in caption:
+                mentioned_me = True
+            if update.message.reply_to_message and update.message.reply_to_message.from_user:
+                if update.message.reply_to_message.from_user.id == self.bot_id:
+                    mentioned_me = True
+            if not mentioned_me:
+                return
+
+        reply_text = random.choice(_DECLINE_MEDIA)
+        await context.bot.send_message(chat_id=chat_id, text=reply_text)
 
     async def _handle_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """统一消息入口"""
@@ -141,8 +271,8 @@ class VirtualPersonaBot:
                 try:
                     if msg["type"] == "text":
                         await bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
-                        typing_time = len(msg["content"]) * random.uniform(0.06, 0.1)
-                        await asyncio.sleep(min(typing_time, 6))
+                        typing_time = len(msg["content"]) * random.uniform(0.03, 0.06)
+                        await asyncio.sleep(min(typing_time, 4))
                         await bot.send_message(
                             chat_id=chat_id,
                             text=msg["content"],
@@ -485,6 +615,18 @@ class VirtualPersonaBot:
         app.add_handler(MessageHandler(
             filters.TEXT & ~filters.COMMAND,
             self._handle_message,
+        ))
+
+        # 图片 + 静态表情包 → 视觉理解
+        app.add_handler(MessageHandler(
+            (filters.PHOTO | filters.Sticker.STATIC) & ~filters.COMMAND,
+            self._handle_media_message,
+        ))
+        # 视频 / 动图 / 动态表情包 → 礼貌拒绝
+        app.add_handler(MessageHandler(
+            (filters.VIDEO | filters.ANIMATION | filters.VIDEO_NOTE
+             | filters.Sticker.ANIMATED | filters.Sticker.VIDEO) & ~filters.COMMAND,
+            self._handle_decline_media_message,
         ))
 
         app.add_error_handler(self._error_handler)

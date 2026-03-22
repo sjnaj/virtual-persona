@@ -1,0 +1,212 @@
+# tests/test_bot_media.py
+import asyncio
+import base64
+from unittest.mock import MagicMock, AsyncMock
+
+
+def _make_bot():
+    from bot import VirtualPersonaBot
+    orch = MagicMock()
+    orch.handle_message = AsyncMock(return_value=[
+        {"type": "text", "content": "好漂亮～", "delay": 0}
+    ])
+    orch.set_proactive_callback = MagicMock()
+    orch.persona = {"name": "林小晴"}
+
+    cfg = {
+        "bot_token": "test:token",
+        "admin_user_id": 999,
+        "allowed_users": [],
+        "allowed_groups": [],
+    }
+    bot_obj = VirtualPersonaBot(orch, cfg)
+    bot_obj.bot_username = "testbot"
+    bot_obj.bot_id = 12345
+    return bot_obj
+
+
+def _make_photo_update(user_id=1, chat_id=1, chat_type="private",
+                       caption=None, is_bot=False, reply_to_bot=False):
+    update = MagicMock()
+    update.message = MagicMock()
+    update.effective_user = MagicMock()
+    update.effective_user.id = user_id
+    update.effective_user.is_bot = is_bot
+    update.effective_user.first_name = "小明"
+    update.effective_user.last_name = None
+    update.effective_chat = MagicMock()
+    update.effective_chat.id = chat_id
+    update.effective_chat.type = chat_type
+    update.effective_chat.title = "测试群"
+
+    photo_size = MagicMock()
+    photo_size.file_id = "photo_file_id_abc"
+    update.message.photo = [photo_size]
+    update.message.sticker = None
+    update.message.caption = caption
+
+    if reply_to_bot:
+        reply_msg = MagicMock()
+        reply_msg.from_user = MagicMock()
+        reply_msg.from_user.id = 12345  # bot_id
+        update.message.reply_to_message = reply_msg
+    else:
+        update.message.reply_to_message = None
+
+    update.message.message_id = 42
+    return update
+
+
+def _make_video_update(user_id=1, chat_id=1, chat_type="private", is_bot=False):
+    update = MagicMock()
+    update.message = MagicMock()
+    update.effective_user = MagicMock()
+    update.effective_user.id = user_id
+    update.effective_user.is_bot = is_bot
+    update.effective_user.first_name = "小明"
+    update.effective_user.last_name = None
+    update.effective_chat = MagicMock()
+    update.effective_chat.id = chat_id
+    update.effective_chat.type = chat_type
+    update.message.caption = None
+    update.message.reply_to_message = None
+    update.message.message_id = 43
+    return update
+
+
+def test_photo_message_calls_orchestrator_with_media():
+    """Photo messages download the file and pass media to orchestrator."""
+    bot_obj = _make_bot()
+    update = _make_photo_update()
+
+    fake_bytes = b"\xff\xd8\xff\xe0test_jpeg_bytes"
+    expected_b64 = base64.b64encode(fake_bytes).decode()
+
+    async def fake_get_file(file_id):
+        f = MagicMock()
+        f.download_as_bytearray = AsyncMock(return_value=bytearray(fake_bytes))
+        return f
+
+    ctx = MagicMock()
+    ctx.bot.get_file = fake_get_file
+    ctx.bot.send_message = AsyncMock()
+    ctx.bot.send_chat_action = AsyncMock()
+
+    asyncio.run(bot_obj._handle_media_message(update, ctx))
+
+    bot_obj.orch.handle_message.assert_called_once()
+    call_kwargs = bot_obj.orch.handle_message.call_args.kwargs
+    media = call_kwargs.get("media")
+    assert media is not None and len(media) == 1
+    assert media[0]["mime_type"] == "image/jpeg"
+    assert media[0]["base64"] == expected_b64
+    assert media[0]["label"] == "photo"
+
+
+def test_photo_with_caption_passes_text():
+    """Caption text is passed as the `text` argument to orchestrator."""
+    bot_obj = _make_bot()
+    update = _make_photo_update(caption="这是我的猫")
+
+    async def fake_get_file(file_id):
+        f = MagicMock()
+        f.download_as_bytearray = AsyncMock(return_value=bytearray(b"\xff\xd8\xff"))
+        return f
+
+    ctx = MagicMock()
+    ctx.bot.get_file = fake_get_file
+    ctx.bot.send_message = AsyncMock()
+    ctx.bot.send_chat_action = AsyncMock()
+
+    asyncio.run(bot_obj._handle_media_message(update, ctx))
+
+    call_kwargs = bot_obj.orch.handle_message.call_args.kwargs
+    assert call_kwargs.get("text") == "这是我的猫"
+
+
+def test_photo_download_failure_proceeds_without_media():
+    """Download failure calls orchestrator with media=None."""
+    bot_obj = _make_bot()
+    update = _make_photo_update(caption="看")
+
+    async def fake_get_file(file_id):
+        raise Exception("network error")
+
+    ctx = MagicMock()
+    ctx.bot.get_file = fake_get_file
+    ctx.bot.send_message = AsyncMock()
+    ctx.bot.send_chat_action = AsyncMock()
+
+    asyncio.run(bot_obj._handle_media_message(update, ctx))
+
+    call_kwargs = bot_obj.orch.handle_message.call_args.kwargs
+    assert call_kwargs.get("media") is None
+
+
+def test_bot_sender_silently_ignored():
+    """Messages from bots are silently dropped."""
+    bot_obj = _make_bot()
+    update = _make_photo_update(is_bot=True)
+    ctx = MagicMock()
+
+    asyncio.run(bot_obj._handle_media_message(update, ctx))
+    bot_obj.orch.handle_message.assert_not_called()
+
+
+def test_video_decline_reply_sent():
+    """Video messages get a hardcoded decline reply."""
+    from bot import _DECLINE_MEDIA
+    bot_obj = _make_bot()
+    update = _make_video_update()
+
+    sent_texts = []
+
+    async def fake_send(chat_id, text, **kwargs):
+        sent_texts.append(text)
+
+    ctx = MagicMock()
+    ctx.bot.send_message = fake_send
+
+    asyncio.run(bot_obj._handle_decline_media_message(update, ctx))
+
+    assert len(sent_texts) == 1
+    assert sent_texts[0] in _DECLINE_MEDIA
+    bot_obj.orch.handle_message.assert_not_called()
+
+
+def test_video_decline_suppressed_in_group_when_not_mentioned():
+    """Video decline is silent in group chats when bot not mentioned."""
+    bot_obj = _make_bot()
+    update = _make_video_update(chat_type="group")
+
+    sent_texts = []
+
+    async def fake_send(chat_id, text, **kwargs):
+        sent_texts.append(text)
+
+    ctx = MagicMock()
+    ctx.bot.send_message = fake_send
+
+    asyncio.run(bot_obj._handle_decline_media_message(update, ctx))
+    assert len(sent_texts) == 0
+
+
+def test_mentioned_me_detected_from_caption():
+    """mentioned_me=True when caption contains @botusername."""
+    bot_obj = _make_bot()
+    update = _make_photo_update(caption="@testbot 看这个")
+
+    async def fake_get_file(file_id):
+        f = MagicMock()
+        f.download_as_bytearray = AsyncMock(return_value=bytearray(b"\xff\xd8"))
+        return f
+
+    ctx = MagicMock()
+    ctx.bot.get_file = fake_get_file
+    ctx.bot.send_message = AsyncMock()
+    ctx.bot.send_chat_action = AsyncMock()
+
+    asyncio.run(bot_obj._handle_media_message(update, ctx))
+
+    call_kwargs = bot_obj.orch.handle_message.call_args.kwargs
+    assert call_kwargs.get("mentioned_me") is True
