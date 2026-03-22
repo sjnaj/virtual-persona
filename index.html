@@ -37,7 +37,6 @@ body {
 ::-webkit-scrollbar-track { background:var(--bg); }
 ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
 
-/* Header */
 .hero {
   text-align:center;
   padding:60px 20px 40px;
@@ -82,8 +81,20 @@ body {
   position:relative;
   font-family:'JetBrains Mono',monospace;
 }
+.version-new {
+  display:inline-block;
+  background:rgba(252,92,140,0.15);
+  border:1px solid rgba(252,92,140,0.3);
+  padding:4px 14px;
+  border-radius:20px;
+  font-size:12px;
+  color:var(--pink);
+  margin-top:16px;
+  margin-left:8px;
+  position:relative;
+  font-family:'JetBrains Mono',monospace;
+}
 
-/* Nav */
 nav {
   position:sticky;
   top:0;
@@ -116,8 +127,14 @@ nav a:hover, nav a.active {
   color:var(--accent);
   background:rgba(124,92,252,0.1);
 }
+nav a .nav-new {
+  font-size:9px;
+  color:var(--pink);
+  vertical-align:super;
+  margin-left:2px;
+  font-weight:700;
+}
 
-/* Main */
 .container {
   max-width:1200px;
   margin:0 auto;
@@ -150,7 +167,6 @@ h3 {
   color:var(--text);
 }
 
-/* Architecture SVG Container */
 .arch-container {
   background:var(--surface);
   border:1px solid var(--border);
@@ -183,7 +199,6 @@ h3 {
   letter-spacing:1.5px;
 }
 
-/* Cards */
 .card-grid {
   display:grid;
   grid-template-columns:repeat(auto-fit, minmax(280px,1fr));
@@ -237,8 +252,18 @@ h3 {
   margin-top:10px;
   font-family:'JetBrains Mono',monospace;
 }
+.card .tag-new {
+  display:inline-block;
+  background:rgba(252,92,140,0.12);
+  color:var(--pink);
+  padding:2px 10px;
+  border-radius:10px;
+  font-size:11px;
+  margin-top:10px;
+  margin-left:4px;
+  font-family:'JetBrains Mono',monospace;
+}
 
-/* Data Flow */
 .flow-container {
   background:var(--surface);
   border:1px solid var(--border);
@@ -247,7 +272,6 @@ h3 {
   overflow-x:auto;
 }
 
-/* Timeline */
 .timeline {
   position:relative;
   padding-left:32px;
@@ -292,7 +316,6 @@ h3 {
   margin-bottom:4px;
 }
 
-/* Command Table */
 .cmd-table {
   width:100%;
   border-collapse:collapse;
@@ -325,7 +348,6 @@ h3 {
 }
 .cmd-table .desc { color:var(--text2); }
 
-/* Code block */
 .code-block {
   background:var(--surface2);
   border:1px solid var(--border);
@@ -344,7 +366,6 @@ h3 {
 .code-block .number { color:var(--yellow); }
 .code-block .param { color:var(--orange); }
 
-/* Tabs */
 .tabs {
   display:flex;
   gap:4px;
@@ -371,7 +392,6 @@ h3 {
 .tab-content { display:none; }
 .tab-content.active { display:block; }
 
-/* Scenario Cards */
 .scenario {
   background:var(--surface);
   border:1px solid var(--border);
@@ -397,6 +417,9 @@ h3 {
   font-size:13px;font-weight:700;
   flex-shrink:0;
 }
+.scenario-header .num-new {
+  background:linear-gradient(135deg,var(--pink),var(--accent2));
+}
 .scenario-header h4 { font-size:15px; flex:1; }
 .scenario-header .arrow {
   color:var(--text2);
@@ -415,7 +438,6 @@ h3 {
   border-top:1px solid var(--border);
 }
 
-/* Stats Bar */
 .stat-bar {
   display:flex;
   align-items:center;
@@ -448,7 +470,6 @@ h3 {
   font-family:'JetBrains Mono',monospace;
 }
 
-/* Relationship Demo */
 .rel-demo {
   display:grid;
   grid-template-columns:repeat(auto-fit, minmax(260px,1fr));
@@ -487,7 +508,6 @@ h3 {
   border-left:3px solid var(--accent);
 }
 
-/* File tree */
 .file-tree {
   font-family:'JetBrains Mono',monospace;
   font-size:13px;
@@ -500,9 +520,9 @@ h3 {
 .file-tree .dir { color:var(--accent3); }
 .file-tree .file { color:var(--text2); }
 .file-tree .file.main { color:var(--green); }
+.file-tree .file.new-file { color:var(--pink); }
 .file-tree .desc { color:#555; font-size:11px; }
 
-/* Alert */
 .alert {
   padding:16px 20px;
   border-radius:10px;
@@ -527,9 +547,13 @@ h3 {
   border:1px solid rgba(92,252,140,0.2);
   color:var(--green);
 }
+.alert-new {
+  background:rgba(252,92,140,0.08);
+  border:1px solid rgba(252,92,140,0.25);
+  color:var(--pink);
+}
 .alert .alert-icon { font-size:18px; flex-shrink:0; }
 
-/* Footer */
 footer {
   text-align:center;
   padding:40px 20px;
@@ -539,7 +563,6 @@ footer {
   margin-top:80px;
 }
 
-/* Interactive Architecture */
 .module-info-panel {
   position:fixed;
   bottom:20px;
@@ -584,14 +607,101 @@ footer {
 }
 .module-info-panel .conn-arrow { color:var(--accent); }
 
-/* Responsive */
+/* Inner State section special styles */
+.inner-pillar-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(280px,1fr));
+  gap:16px;
+  margin:20px 0;
+}
+.inner-pillar {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:24px;
+  position:relative;
+  overflow:hidden;
+}
+.inner-pillar .pillar-icon {
+  font-size:36px;
+  margin-bottom:10px;
+}
+.inner-pillar h4 {
+  font-size:16px;
+  font-weight:700;
+  margin-bottom:8px;
+}
+.inner-pillar p {
+  color:var(--text2);
+  font-size:13px;
+  line-height:1.7;
+}
+.inner-pillar .pillar-example {
+  margin-top:12px;
+  padding:10px 14px;
+  background:var(--surface2);
+  border-radius:8px;
+  font-size:12px;
+  color:var(--text2);
+  font-style:italic;
+  border-left:3px solid var(--accent2);
+}
+.inner-pillar-mono { border-top:3px solid var(--accent2); }
+.inner-pillar-pending { border-top:3px solid var(--pink); }
+.inner-pillar-mood { border-top:3px solid var(--accent3); }
+
+.mood-day-row {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:10px 0;
+  border-bottom:1px solid var(--border);
+  font-size:13px;
+}
+.mood-day-row:last-child { border-bottom:none; }
+.mood-day-label {
+  width:60px;
+  font-weight:600;
+  font-size:12px;
+  color:var(--text2);
+  flex-shrink:0;
+}
+.mood-day-bar {
+  flex:1;
+  height:8px;
+  background:var(--surface3);
+  border-radius:4px;
+  position:relative;
+  overflow:hidden;
+}
+.mood-day-fill {
+  height:100%;
+  border-radius:4px;
+  transition:width 1.5s ease;
+}
+.mood-day-val {
+  width:50px;
+  text-align:right;
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  color:var(--text2);
+}
+.mood-day-note {
+  font-size:11px;
+  color:var(--text2);
+  width:140px;
+  flex-shrink:0;
+}
+
 @media(max-width:768px) {
   .arch-container { padding:16px 8px; }
   .card-grid { grid-template-columns:1fr; }
   .rel-demo { grid-template-columns:1fr; }
+  .inner-pillar-grid { grid-template-columns:1fr; }
   .module-info-panel { width:calc(100% - 40px); right:20px; left:20px; }
   nav .inner { gap:0; }
   nav a { padding:8px 12px; font-size:12px; }
+  .mood-day-note { display:none; }
 }
 
 /* ===================================================
@@ -656,7 +766,6 @@ footer {
 
 /* ===================================================
    THEME 1 — AURORA GLASS (default)
-   极光玻璃：毛玻璃卡片 + 渐变光晕背景
    =================================================== */
 [data-theme="aurora"] body::before {
   content:'';
@@ -686,7 +795,8 @@ footer {
   0%  { transform:translate(0,0) scale(1); }
   100%{ transform:translate(-14vw,-8vh) scale(1.2); }
 }
-[data-theme="aurora"] .card {
+[data-theme="aurora"] .card,
+[data-theme="aurora"] .inner-pillar {
   background:rgba(26,26,40,0.65);
   backdrop-filter:blur(14px) saturate(160%);
   -webkit-backdrop-filter:blur(14px) saturate(160%);
@@ -712,7 +822,6 @@ footer {
 
 /* ===================================================
    THEME 2 — TERMINAL MONO
-   极简终端：纯黑 + 终端绿 + 等宽字体 + 扫描线
    =================================================== */
 [data-theme="terminal"] {
   --bg:#000000;
@@ -735,7 +844,6 @@ footer {
 [data-theme="terminal"] body {
   font-family:'JetBrains Mono','Courier New',monospace;
 }
-/* scanline overlay */
 [data-theme="terminal"] body::before {
   content:'';
   position:fixed;
@@ -752,7 +860,6 @@ footer {
   animation:none;
 }
 [data-theme="terminal"] body::after { display:none; }
-/* hero */
 [data-theme="terminal"] .hero::before { display:none; }
 [data-theme="terminal"] .hero h1 {
   background:none !important;
@@ -778,12 +885,12 @@ footer {
   content:'$ ';
   color:var(--accent);
 }
-[data-theme="terminal"] .version-badge {
+[data-theme="terminal"] .version-badge,
+[data-theme="terminal"] .version-new {
   border-color:var(--accent);
   color:var(--accent);
   border-radius:2px;
 }
-/* nav */
 [data-theme="terminal"] nav {
   background:#000000;
   backdrop-filter:none;
@@ -796,7 +903,7 @@ footer {
   background:rgba(0,232,122,0.08);
   border-radius:0;
 }
-/* sections */
+[data-theme="terminal"] nav a .nav-new { color:var(--accent2); }
 [data-theme="terminal"] section h2 {
   font-family:'JetBrains Mono',monospace;
   font-size:17px;
@@ -813,8 +920,8 @@ footer {
   color:var(--accent);
 }
 [data-theme="terminal"] h3::before { content:'## '; color:var(--text2); }
-/* sharp corners on everything */
 [data-theme="terminal"] .card,
+[data-theme="terminal"] .inner-pillar,
 [data-theme="terminal"] .arch-container,
 [data-theme="terminal"] .flow-container,
 [data-theme="terminal"] .timeline-item,
@@ -827,47 +934,41 @@ footer {
 [data-theme="terminal"] .tab-btn,
 [data-theme="terminal"] nav a { border-radius:2px !important; }
 [data-theme="terminal"] .scenario-header .num { border-radius:2px !important; }
-/* card */
 [data-theme="terminal"] .card::before { display:none; }
-[data-theme="terminal"] .card:hover {
+[data-theme="terminal"] .card:hover,
+[data-theme="terminal"] .inner-pillar:hover {
   transform:none;
   box-shadow:0 0 0 1px var(--accent),0 0 20px rgba(0,232,122,0.07);
   border-color:var(--accent);
 }
-[data-theme="terminal"] .card .tag {
+[data-theme="terminal"] .card .tag,
+[data-theme="terminal"] .card .tag-new {
   border-radius:2px;
   color:var(--accent);
   border:1px solid rgba(0,232,122,0.25);
   background:rgba(0,232,122,0.05);
 }
-/* tabs */
 [data-theme="terminal"] .tab-btn.active {
   background:rgba(0,232,122,0.1);
   border-color:var(--accent);
   color:var(--accent);
 }
-/* timeline */
 [data-theme="terminal"] .timeline::before { background:var(--accent); }
 [data-theme="terminal"] .timeline-item::before { background:var(--accent); }
 [data-theme="terminal"] .timeline-item .meta { color:var(--accent); }
-/* code block */
 [data-theme="terminal"] .code-block { border-left:3px solid var(--accent); }
-/* footer */
 [data-theme="terminal"] footer { border-top:1px solid var(--accent); }
-/* module panel */
 [data-theme="terminal"] .module-info-panel { border-color:var(--accent); }
 [data-theme="terminal"] .module-info-panel h4 { color:var(--accent); }
-/* cmd table */
 [data-theme="terminal"] .cmd-table th { color:var(--accent); }
 [data-theme="terminal"] .cmd-table code { color:var(--accent); }
-/* alert */
 [data-theme="terminal"] .alert-info { background:rgba(0,232,122,0.05); border-color:rgba(0,232,122,0.2); color:var(--accent); }
 [data-theme="terminal"] .alert-tip { background:rgba(0,204,255,0.05); border-color:rgba(0,204,255,0.2); color:var(--accent2); }
 [data-theme="terminal"] .alert-warn { background:rgba(255,204,0,0.05); border-color:rgba(255,204,0,0.2); color:var(--yellow); }
+[data-theme="terminal"] .alert-new { background:rgba(255,102,204,0.05); border-color:rgba(255,102,204,0.2); color:var(--pink); }
 
 /* ===================================================
    THEME 3 — WARM EMBER
-   琥珀暖调：暗棕底色 + 琥珀橙 + 衬线字体
    =================================================== */
 [data-theme="ember"] {
   --bg:#0f0c08;
@@ -895,11 +996,11 @@ footer {
 }
 [data-theme="ember"] body::before,
 [data-theme="ember"] body::after { display:none; }
-/* headings: serif */
 [data-theme="ember"] .hero h1,
 [data-theme="ember"] section h2,
 [data-theme="ember"] h3,
 [data-theme="ember"] .card h4,
+[data-theme="ember"] .inner-pillar h4,
 [data-theme="ember"] .timeline-item h4 {
   font-family:'Lora',Georgia,'Noto Serif SC',serif;
 }
@@ -914,7 +1015,6 @@ footer {
 [data-theme="ember"] .hero::before {
   background:radial-gradient(ellipse at 50% 50%,rgba(240,160,32,0.07) 0%,transparent 60%);
 }
-/* nav */
 [data-theme="ember"] nav {
   background:rgba(15,12,8,0.9);
   border-bottom:1px solid var(--border);
@@ -924,18 +1024,24 @@ footer {
   color:var(--accent);
   background:rgba(240,160,32,0.1);
 }
-/* version badge */
 [data-theme="ember"] .version-badge {
   color:var(--accent);
   border-color:rgba(240,160,32,0.3);
   border-radius:4px;
 }
-/* cards: rounder + warm gradient */
-[data-theme="ember"] .card {
+[data-theme="ember"] .version-new {
+  color:var(--accent2);
+  border-color:rgba(224,80,80,0.3);
+  background:rgba(224,80,80,0.1);
+  border-radius:4px;
+}
+[data-theme="ember"] .card,
+[data-theme="ember"] .inner-pillar {
   border-radius:20px;
   background:linear-gradient(145deg,var(--surface),var(--surface2));
 }
-[data-theme="ember"] .card:hover {
+[data-theme="ember"] .card:hover,
+[data-theme="ember"] .inner-pillar:hover {
   border-color:var(--accent);
   box-shadow:0 8px 40px rgba(240,160,32,0.14);
 }
@@ -947,29 +1053,29 @@ footer {
   background:rgba(240,160,32,0.1);
   border-radius:8px;
 }
+[data-theme="ember"] .card .tag-new {
+  color:var(--accent2);
+  background:rgba(224,80,80,0.1);
+  border-radius:8px;
+}
 [data-theme="ember"] .card .card-icon { font-size:30px; }
-/* timeline */
 [data-theme="ember"] .timeline::before {
   background:linear-gradient(to bottom,var(--accent),var(--accent2),var(--accent3));
 }
 [data-theme="ember"] .timeline-item::before { background:var(--accent); }
 [data-theme="ember"] .timeline-item .meta { color:var(--accent); }
-/* scenario num badge */
 [data-theme="ember"] .scenario-header .num {
   background:linear-gradient(135deg,var(--accent),var(--accent3));
 }
-/* tabs */
 [data-theme="ember"] .tab-btn.active {
   background:rgba(240,160,32,0.12);
   border-color:var(--accent);
   color:var(--accent);
 }
-/* code block */
 [data-theme="ember"] .code-block {
   border-left:3px solid var(--accent);
   background:var(--surface2);
 }
-/* alerts */
 [data-theme="ember"] .alert-info {
   background:rgba(240,160,32,0.07);
   border-color:rgba(240,160,32,0.2);
@@ -985,28 +1091,25 @@ footer {
   border-color:rgba(232,176,48,0.2);
   color:var(--yellow);
 }
-/* cmd table */
+[data-theme="ember"] .alert-new {
+  background:rgba(224,80,112,0.08);
+  border-color:rgba(224,80,112,0.2);
+  color:var(--pink);
+}
 [data-theme="ember"] .cmd-table th { color:var(--accent); }
 [data-theme="ember"] .cmd-table code { color:var(--cyan); }
-/* module panel */
 [data-theme="ember"] .module-info-panel { border-color:var(--accent); }
 [data-theme="ember"] .module-info-panel h4 { color:var(--accent); }
-/* arch container */
 [data-theme="ember"] .arch-container,
 [data-theme="ember"] .flow-container {
   background:var(--surface);
   border-color:var(--border);
 }
-/* file tree */
 [data-theme="ember"] .file-tree { background:var(--surface); }
-/* rel cards */
 [data-theme="ember"] .rel-card { background:var(--surface); }
 [data-theme="ember"] .rel-card .rel-quote { border-left-color:var(--accent); }
-/* section h2 icon */
 [data-theme="ember"] section h2 .icon { font-size:24px; }
-/* scrollbar */
 [data-theme="ember"] ::-webkit-scrollbar-thumb { background:var(--border); }
-/* selection */
 [data-theme="ember"] ::selection { background:var(--accent); }
 </style>
 </head>
@@ -1017,6 +1120,7 @@ footer {
   <h1>虚拟人格系统</h1>
   <div class="sub">单一个体 · 多重关系 · 跨窗口互动 · 真实社交模拟</div>
   <div class="version-badge">v2.0 — Multi-Relationship Architecture</div>
+  <div class="version-new">+ v2.1 Inner State Manager</div>
 </div>
 
 <!-- Nav -->
@@ -1025,6 +1129,7 @@ footer {
     <a href="#arch" class="active">架构总览</a>
     <a href="#modules">模块详解</a>
     <a href="#dataflow">数据流</a>
+    <a href="#innerstate">内心状态<span class="nav-new">NEW</span></a>
     <a href="#relationship">关系系统</a>
     <a href="#group">群聊引擎</a>
     <a href="#privacy">隐私边界</a>
@@ -1043,7 +1148,7 @@ footer {
   <p class="section-desc">她是唯一的个体——一个大脑、一份情绪、一段人生。但她在不同聊天窗口面对不同的人时，会自然地切换语气和边界，就像真人在微信里和不同的人聊天一样。</p>
 
   <div class="arch-container">
-    <svg class="arch-svg" viewBox="0 0 960 720" xmlns="http://www.w3.org/2000/svg">
+    <svg class="arch-svg" viewBox="0 0 960 780" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id="gAccent" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stop-color="#7c5cfc"/>
@@ -1061,8 +1166,17 @@ footer {
           <stop offset="0%" stop-color="#5cfc8c"/>
           <stop offset="100%" stop-color="#fcd05c"/>
         </linearGradient>
+        <linearGradient id="gInner" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#7c5cfc"/>
+          <stop offset="50%" stop-color="#c05cfc"/>
+          <stop offset="100%" stop-color="#fc5c8c"/>
+        </linearGradient>
         <filter id="glow">
           <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+          <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="glowStrong">
+          <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
           <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
         </filter>
         <marker id="arrowAccent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -1077,10 +1191,13 @@ footer {
         <marker id="arrowGray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
           <path d="M 0 0 L 10 5 L 0 10 z" fill="#555"/>
         </marker>
+        <marker id="arrowInner" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#c05cfc"/>
+        </marker>
       </defs>
 
       <!-- ===== Zone: Singleton Core ===== -->
-      <rect x="240" y="30" width="480" height="190" rx="16" fill="none" stroke="#7c5cfc" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.4"/>
+      <rect x="240" y="30" width="480" height="220" rx="16" fill="none" stroke="#7c5cfc" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.4"/>
       <text x="260" y="52" class="zone-label" fill="#7c5cfc" font-size="10" font-weight="600" letter-spacing="2">SINGLETON CORE — 唯一自我</text>
 
       <!-- LifeSimulator -->
@@ -1113,133 +1230,148 @@ footer {
       <text x="635" y="170" text-anchor="middle" class="module-title" font-size="12" fill="#e0e0f0">🔌 EventBus</text>
       <text x="635" y="190" text-anchor="middle" class="label" font-size="10">事件分发中心</text>
 
+      <!-- ★ NEW: InnerStateManager -->
+      <rect x="350" y="210" width="260" height="34" rx="10" fill="rgba(192,92,252,0.08)" stroke="url(#gInner)" stroke-width="2" filter="url(#glowStrong)" class="mod" data-mod="innerstate"/>
+      <text x="480" y="232" text-anchor="middle" class="module-title" font-size="12" fill="#e0e0f0">💭 InnerStateManager</text>
+      <!-- NEW badge -->
+      <rect x="596" y="215" width="38" height="16" rx="4" fill="rgba(252,92,140,0.25)" stroke="#fc5c8c" stroke-width="0.8"/>
+      <text x="615" y="226" text-anchor="middle" font-size="8" font-weight="700" fill="#fc5c8c">NEW</text>
+      <!-- Sub-label below the box -->
+      <text x="480" y="256" text-anchor="middle" class="label" font-size="9" fill="#b090d0">内心独白 · 情绪底色 · 跨对话跟进</text>
+
+      <!-- Subtle connection: InnerState ↔ EmotionEngine -->
+      <path d="M 420 210 Q 410 170 435 128" stroke="#c05cfc" stroke-width="0.8" fill="none" stroke-dasharray="3 3" opacity="0.5" marker-end="url(#arrowInner)"/>
+      <!-- Subtle connection: InnerState ↔ ProactiveEngine -->
+      <line x1="480" y1="210" x2="480" y2="200" stroke="#c05cfc" stroke-width="0.8" stroke-dasharray="2 2" opacity="0.5"/>
+
       <!-- ===== Zone: Per-User Layer ===== -->
-      <rect x="50" y="250" width="860" height="130" rx="16" fill="none" stroke="#fc5c8c" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.4"/>
-      <text x="70" y="272" class="zone-label" fill="#fc5c8c" font-size="10" font-weight="600" letter-spacing="2">PER-USER LAYER — 每人独立</text>
+      <rect x="50" y="310" width="860" height="130" rx="16" fill="none" stroke="#fc5c8c" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.4"/>
+      <text x="70" y="332" class="zone-label" fill="#fc5c8c" font-size="10" font-weight="600" letter-spacing="2">PER-USER LAYER — 每人独立</text>
 
       <!-- RelationshipManager -->
-      <rect x="70" y="290" width="200" height="70" rx="10" fill="#1a1a28" stroke="#fc5c8c" stroke-width="1.5" class="mod" data-mod="relationship"/>
-      <text x="170" y="318" text-anchor="middle" class="module-title" font-size="12" fill="#e0e0f0">👥 RelationshipManager</text>
-      <text x="170" y="340" text-anchor="middle" class="label" font-size="10">关系档案 · 亲密度 · 印象标签</text>
+      <rect x="70" y="350" width="200" height="70" rx="10" fill="#1a1a28" stroke="#fc5c8c" stroke-width="1.5" class="mod" data-mod="relationship"/>
+      <text x="170" y="378" text-anchor="middle" class="module-title" font-size="12" fill="#e0e0f0">👥 RelationshipManager</text>
+      <text x="170" y="400" text-anchor="middle" class="label" font-size="10">关系档案 · 亲密度 · 印象标签</text>
 
       <!-- Rel profiles -->
-      <rect x="295" y="288" width="105" height="50" rx="8" fill="#222235" stroke="#fc8c5c" stroke-width="1" class="mod" data-mod="profile-you"/>
-      <text x="348" y="310" text-anchor="middle" font-size="11" fill="#fc8c5c">关系:你</text>
-      <text x="348" y="326" text-anchor="middle" class="label" font-size="9">亲密 0.8 · 暧昧</text>
+      <rect x="295" y="348" width="105" height="50" rx="8" fill="#222235" stroke="#fc8c5c" stroke-width="1" class="mod" data-mod="profile-you"/>
+      <text x="348" y="370" text-anchor="middle" font-size="11" fill="#fc8c5c">关系:你</text>
+      <text x="348" y="386" text-anchor="middle" class="label" font-size="9">亲密 0.8 · 暧昧</text>
 
-      <rect x="410" y="288" width="105" height="50" rx="8" fill="#222235" stroke="#5c8cfc" stroke-width="1" class="mod" data-mod="profile-friend"/>
-      <text x="463" y="310" text-anchor="middle" font-size="11" fill="#5c8cfc">关系:同事</text>
-      <text x="463" y="326" text-anchor="middle" class="label" font-size="9">亲密 0.3 · 普通</text>
+      <rect x="410" y="348" width="105" height="50" rx="8" fill="#222235" stroke="#5c8cfc" stroke-width="1" class="mod" data-mod="profile-friend"/>
+      <text x="463" y="370" text-anchor="middle" font-size="11" fill="#5c8cfc">关系:同事</text>
+      <text x="463" y="386" text-anchor="middle" class="label" font-size="9">亲密 0.3 · 普通</text>
 
-      <rect x="525" y="288" width="105" height="50" rx="8" fill="#222235" stroke="#5cfcf0" stroke-width="1" class="mod" data-mod="profile-ai"/>
-      <text x="578" y="310" text-anchor="middle" font-size="11" fill="#5cfcf0">关系:AI-B</text>
-      <text x="578" y="326" text-anchor="middle" class="label" font-size="9">亲密 0.5 · 网友</text>
+      <rect x="525" y="348" width="105" height="50" rx="8" fill="#222235" stroke="#5cfcf0" stroke-width="1" class="mod" data-mod="profile-ai"/>
+      <text x="578" y="370" text-anchor="middle" font-size="11" fill="#5cfcf0">关系:AI-B</text>
+      <text x="578" y="386" text-anchor="middle" class="label" font-size="9">亲密 0.5 · 网友</text>
 
-      <rect x="640" y="288" width="105" height="50" rx="8" fill="#222235" stroke="#9090b0" stroke-width="1" class="mod" data-mod="profile-new"/>
-      <text x="693" y="310" text-anchor="middle" font-size="11" fill="#9090b0">关系:陌生人</text>
-      <text x="693" y="326" text-anchor="middle" class="label" font-size="9">亲密 0.1 · 新</text>
+      <rect x="640" y="348" width="105" height="50" rx="8" fill="#222235" stroke="#9090b0" stroke-width="1" class="mod" data-mod="profile-new"/>
+      <text x="693" y="370" text-anchor="middle" font-size="11" fill="#9090b0">关系:陌生人</text>
+      <text x="693" y="386" text-anchor="middle" class="label" font-size="9">亲密 0.1 · 新</text>
 
-      <text x="762" y="318" font-size="18" fill="#555">···</text>
+      <text x="762" y="378" font-size="18" fill="#555">···</text>
 
       <!-- Arrows from RelMgr to profiles -->
-      <line x1="270" y1="320" x2="293" y2="315" stroke="#fc5c8c" stroke-width="1" marker-end="url(#arrowPink)"/>
+      <line x1="270" y1="380" x2="293" y2="375" stroke="#fc5c8c" stroke-width="1" marker-end="url(#arrowPink)"/>
 
       <!-- ===== Zone: Shared Intelligence ===== -->
-      <rect x="50" y="410" width="860" height="110" rx="16" fill="none" stroke="#5c8cfc" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.4"/>
-      <text x="70" y="432" class="zone-label" fill="#5c8cfc" font-size="10" font-weight="600" letter-spacing="2">SHARED INTELLIGENCE — 共享智能层</text>
+      <rect x="50" y="470" width="860" height="110" rx="16" fill="none" stroke="#5c8cfc" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.4"/>
+      <text x="70" y="492" class="zone-label" fill="#5c8cfc" font-size="10" font-weight="600" letter-spacing="2">SHARED INTELLIGENCE — 共享智能层</text>
 
       <!-- MemoryHub -->
-      <rect x="70" y="448" width="200" height="55" rx="10" fill="#1a1a28" stroke="#5c8cfc" stroke-width="1.5" class="mod" data-mod="memory"/>
-      <text x="170" y="473" text-anchor="middle" class="module-title" font-size="12" fill="#e0e0f0">🧠 MemoryHub</text>
-      <text x="170" y="493" text-anchor="middle" class="label" font-size="10">情节 · 语义 · 情感 + 隐私标记</text>
+      <rect x="70" y="508" width="200" height="55" rx="10" fill="#1a1a28" stroke="#5c8cfc" stroke-width="1.5" class="mod" data-mod="memory"/>
+      <text x="170" y="533" text-anchor="middle" class="module-title" font-size="12" fill="#e0e0f0">🧠 MemoryHub</text>
+      <text x="170" y="553" text-anchor="middle" class="label" font-size="10">情节 · 语义 · 情感 + 隐私标记</text>
 
       <!-- ChatContextManager -->
-      <rect x="300" y="448" width="200" height="55" rx="10" fill="#1a1a28" stroke="#5c8cfc" stroke-width="1.5" class="mod" data-mod="chatctx"/>
-      <text x="400" y="473" text-anchor="middle" class="module-title" font-size="12" fill="#e0e0f0">💭 ChatContextManager</text>
-      <text x="400" y="493" text-anchor="middle" class="label" font-size="10">每窗口对话流 · 会话状态</text>
+      <rect x="300" y="508" width="200" height="55" rx="10" fill="#1a1a28" stroke="#5c8cfc" stroke-width="1.5" class="mod" data-mod="chatctx"/>
+      <text x="400" y="533" text-anchor="middle" class="module-title" font-size="12" fill="#e0e0f0">💭 ChatContextManager</text>
+      <text x="400" y="553" text-anchor="middle" class="label" font-size="10">每窗口对话流 · 会话状态</text>
 
       <!-- GroupBehaviorEngine -->
-      <rect x="530" y="448" width="200" height="55" rx="10" fill="#1a1a28" stroke="#5cfc8c" stroke-width="1.5" class="mod" data-mod="groupbeh"/>
-      <text x="630" y="473" text-anchor="middle" class="module-title" font-size="12" fill="#e0e0f0">🎯 GroupBehavior</text>
-      <text x="630" y="493" text-anchor="middle" class="label" font-size="10">群聊决策 · 概率回复 · 潜水</text>
+      <rect x="530" y="508" width="200" height="55" rx="10" fill="#1a1a28" stroke="#5cfc8c" stroke-width="1.5" class="mod" data-mod="groupbeh"/>
+      <text x="630" y="533" text-anchor="middle" class="module-title" font-size="12" fill="#e0e0f0">🎯 GroupBehavior</text>
+      <text x="630" y="553" text-anchor="middle" class="label" font-size="10">群聊决策 · 概率回复 · 潜水</text>
 
       <!-- ExpressionSynthesizer -->
-      <rect x="760" y="448" width="130" height="55" rx="10" fill="#1a1a28" stroke="url(#gAccent)" stroke-width="2" class="mod" data-mod="expression"/>
-      <text x="825" y="473" text-anchor="middle" class="module-title" font-size="12" fill="#e0e0f0">✍️ Expression</text>
-      <text x="825" y="493" text-anchor="middle" class="label" font-size="10">表达合成 · 人格化输出</text>
+      <rect x="760" y="508" width="130" height="55" rx="10" fill="#1a1a28" stroke="url(#gAccent)" stroke-width="2" class="mod" data-mod="expression"/>
+      <text x="825" y="533" text-anchor="middle" class="module-title" font-size="12" fill="#e0e0f0">✍️ Expression</text>
+      <text x="825" y="553" text-anchor="middle" class="label" font-size="10">表达合成 · 人格化输出</text>
 
       <!-- ===== Zone: Orchestrator ===== -->
-      <rect x="280" y="545" width="400" height="55" rx="12" fill="rgba(124,92,252,0.1)" stroke="url(#gAccent)" stroke-width="2" filter="url(#glow)" class="mod" data-mod="orchestrator"/>
-      <text x="480" y="577" text-anchor="middle" class="module-title" font-size="14" fill="#c0b0ff">🎭 Orchestrator — 中枢协调器</text>
+      <rect x="280" y="605" width="400" height="55" rx="12" fill="rgba(124,92,252,0.1)" stroke="url(#gAccent)" stroke-width="2" filter="url(#glow)" class="mod" data-mod="orchestrator"/>
+      <text x="480" y="637" text-anchor="middle" class="module-title" font-size="14" fill="#c0b0ff">🎭 Orchestrator — 中枢协调器</text>
 
       <!-- ===== Zone: I/O ===== -->
-      <rect x="50" y="630" width="860" height="70" rx="16" fill="none" stroke="#9090b0" stroke-width="1" stroke-dasharray="4 3" opacity="0.3"/>
-      <text x="70" y="652" class="zone-label" fill="#9090b0" font-size="10" font-weight="600" letter-spacing="2">I/O LAYER — 外部接口</text>
+      <rect x="50" y="690" width="860" height="70" rx="16" fill="none" stroke="#9090b0" stroke-width="1" stroke-dasharray="4 3" opacity="0.3"/>
+      <text x="70" y="712" class="zone-label" fill="#9090b0" font-size="10" font-weight="600" letter-spacing="2">I/O LAYER — 外部接口</text>
 
       <!-- Chat windows -->
-      <rect x="80" y="660" width="130" height="32" rx="8" fill="#222235" stroke="#fc8c5c" stroke-width="1"/>
-      <text x="145" y="680" text-anchor="middle" font-size="11" fill="#fc8c5c">🔒 私聊：你</text>
+      <rect x="80" y="720" width="130" height="32" rx="8" fill="#222235" stroke="#fc8c5c" stroke-width="1"/>
+      <text x="145" y="740" text-anchor="middle" font-size="11" fill="#fc8c5c">🔒 私聊：你</text>
 
-      <rect x="225" y="660" width="130" height="32" rx="8" fill="#222235" stroke="#5c8cfc" stroke-width="1"/>
-      <text x="290" y="680" text-anchor="middle" font-size="11" fill="#5c8cfc">🔒 私聊：同事</text>
+      <rect x="225" y="720" width="130" height="32" rx="8" fill="#222235" stroke="#5c8cfc" stroke-width="1"/>
+      <text x="290" y="740" text-anchor="middle" font-size="11" fill="#5c8cfc">🔒 私聊：同事</text>
 
-      <rect x="370" y="660" width="130" height="32" rx="8" fill="#222235" stroke="#5cfcf0" stroke-width="1"/>
-      <text x="435" y="680" text-anchor="middle" font-size="11" fill="#5cfcf0">🔒 私聊：AI-B</text>
+      <rect x="370" y="720" width="130" height="32" rx="8" fill="#222235" stroke="#5cfcf0" stroke-width="1"/>
+      <text x="435" y="740" text-anchor="middle" font-size="11" fill="#5cfcf0">🔒 私聊：AI-B</text>
 
-      <rect x="530" y="660" width="160" height="32" rx="8" fill="#222235" stroke="#5cfc8c" stroke-width="1"/>
-      <text x="610" y="680" text-anchor="middle" font-size="11" fill="#5cfc8c">👥 群聊：朋友群</text>
+      <rect x="530" y="720" width="160" height="32" rx="8" fill="#222235" stroke="#5cfc8c" stroke-width="1"/>
+      <text x="610" y="740" text-anchor="middle" font-size="11" fill="#5cfc8c">👥 群聊：朋友群</text>
 
-      <rect x="710" y="660" width="160" height="32" rx="8" fill="#222235" stroke="#fcd05c" stroke-width="1"/>
-      <text x="790" y="680" text-anchor="middle" font-size="11" fill="#fcd05c">👥 群聊：工作群</text>
+      <rect x="710" y="720" width="160" height="32" rx="8" fill="#222235" stroke="#fcd05c" stroke-width="1"/>
+      <text x="790" y="740" text-anchor="middle" font-size="11" fill="#fcd05c">👥 群聊：工作群</text>
 
       <!-- ===== Connecting Arrows ===== -->
       <!-- Core → Orchestrator -->
-      <path d="M 480 220 L 480 543" stroke="#7c5cfc" stroke-width="1.5" fill="none" marker-end="url(#arrowAccent)" stroke-dasharray="4 3"/>
+      <path d="M 480 260 L 480 603" stroke="#7c5cfc" stroke-width="1.5" fill="none" marker-end="url(#arrowAccent)" stroke-dasharray="4 3"/>
 
       <!-- RelMgr → Orchestrator -->
-      <path d="M 170 360 L 170 400 L 380 400 L 380 543" stroke="#fc5c8c" stroke-width="1.2" fill="none" marker-end="url(#arrowPink)" stroke-dasharray="4 3"/>
+      <path d="M 170 420 L 170 460 L 380 460 L 380 603" stroke="#fc5c8c" stroke-width="1.2" fill="none" marker-end="url(#arrowPink)" stroke-dasharray="4 3"/>
 
       <!-- Memory → Orchestrator -->
-      <path d="M 170 503 L 170 572 L 278 572" stroke="#5c8cfc" stroke-width="1.2" fill="none" marker-end="url(#arrowBlue)"/>
+      <path d="M 170 563 L 170 632 L 278 632" stroke="#5c8cfc" stroke-width="1.2" fill="none" marker-end="url(#arrowBlue)"/>
 
       <!-- ChatCtx → Orchestrator -->
-      <path d="M 400 503 L 400 543" stroke="#5c8cfc" stroke-width="1.2" fill="none" marker-end="url(#arrowBlue)"/>
+      <path d="M 400 563 L 400 603" stroke="#5c8cfc" stroke-width="1.2" fill="none" marker-end="url(#arrowBlue)"/>
 
       <!-- GroupBeh → Orchestrator -->
-      <path d="M 630 503 L 630 572 L 682 572" stroke="#5cfc8c" stroke-width="1" fill="none" marker-end="url(#arrowGray)"/>
+      <path d="M 630 563 L 630 632 L 682 632" stroke="#5cfc8c" stroke-width="1" fill="none" marker-end="url(#arrowGray)"/>
 
       <!-- Expression → Orchestrator -->
-      <path d="M 825 503 L 825 572 L 682 572" stroke="#7c5cfc" stroke-width="1" fill="none" marker-end="url(#arrowAccent)"/>
+      <path d="M 825 563 L 825 632 L 682 632" stroke="#7c5cfc" stroke-width="1" fill="none" marker-end="url(#arrowAccent)"/>
 
       <!-- Orchestrator → I/O windows -->
-      <path d="M 380 600 L 145 658" stroke="#555" stroke-width="1" fill="none" marker-end="url(#arrowGray)"/>
-      <path d="M 430 600 L 290 658" stroke="#555" stroke-width="1" fill="none" marker-end="url(#arrowGray)"/>
-      <path d="M 480 600 L 435 658" stroke="#555" stroke-width="1" fill="none" marker-end="url(#arrowGray)"/>
-      <path d="M 530 600 L 610 658" stroke="#555" stroke-width="1" fill="none" marker-end="url(#arrowGray)"/>
-      <path d="M 580 600 L 790 658" stroke="#555" stroke-width="1" fill="none" marker-end="url(#arrowGray)"/>
+      <path d="M 380 660 L 145 718" stroke="#555" stroke-width="1" fill="none" marker-end="url(#arrowGray)"/>
+      <path d="M 430 660 L 290 718" stroke="#555" stroke-width="1" fill="none" marker-end="url(#arrowGray)"/>
+      <path d="M 480 660 L 435 718" stroke="#555" stroke-width="1" fill="none" marker-end="url(#arrowGray)"/>
+      <path d="M 530 660 L 610 718" stroke="#555" stroke-width="1" fill="none" marker-end="url(#arrowGray)"/>
+      <path d="M 580 660 L 790 718" stroke="#555" stroke-width="1" fill="none" marker-end="url(#arrowGray)"/>
 
       <!-- LLM Box -->
-      <rect x="790" y="290" width="100" height="44" rx="8" fill="#1a1a28" stroke="#fcd05c" stroke-width="1.5"/>
-      <text x="840" y="310" text-anchor="middle" font-size="11" fill="#fcd05c">⚡ LLM API</text>
-      <text x="840" y="325" text-anchor="middle" class="label" font-size="9">GPT / Claude</text>
+      <rect x="790" y="350" width="100" height="44" rx="8" fill="#1a1a28" stroke="#fcd05c" stroke-width="1.5"/>
+      <text x="840" y="370" text-anchor="middle" font-size="11" fill="#fcd05c">⚡ LLM API</text>
+      <text x="840" y="385" text-anchor="middle" class="label" font-size="9">GPT / Claude</text>
 
       <!-- LLM arrows -->
-      <line x1="790" y1="312" x2="760" y2="312" stroke="#fcd05c" stroke-width="0.8" stroke-dasharray="3 2"/>
+      <line x1="790" y1="372" x2="760" y2="372" stroke="#fcd05c" stroke-width="0.8" stroke-dasharray="3 2"/>
 
       <!-- Legend -->
-      <rect x="60" y="60" width="160" height="130" rx="8" fill="rgba(18,18,26,0.8)"/>
+      <rect x="60" y="60" width="160" height="150" rx="8" fill="rgba(18,18,26,0.8)"/>
       <text x="75" y="80" font-size="10" font-weight="600" fill="#9090b0">图例</text>
       <circle cx="82" cy="98" r="4" fill="#7c5cfc"/><text x="94" y="102" font-size="10" fill="#9090b0">全局单例模块</text>
       <circle cx="82" cy="118" r="4" fill="#fc5c8c"/><text x="94" y="122" font-size="10" fill="#9090b0">每用户独立数据</text>
       <circle cx="82" cy="138" r="4" fill="#5c8cfc"/><text x="94" y="142" font-size="10" fill="#9090b0">共享智能层</text>
       <circle cx="82" cy="158" r="4" fill="#5cfc8c"/><text x="94" y="162" font-size="10" fill="#9090b0">行为决策</text>
       <circle cx="82" cy="178" r="4" fill="#9090b0"/><text x="94" y="182" font-size="10" fill="#9090b0">I/O 接口</text>
+      <rect x="76" y="192" width="12" height="8" rx="2" fill="none" stroke="url(#gInner)" stroke-width="1.5"/><text x="94" y="200" font-size="10" fill="#c05cfc">v2.1 新模块</text>
     </svg>
   </div>
 
   <div class="alert alert-info" style="margin-top:20px;">
     <span class="alert-icon">💡</span>
-    <span>核心设计原则：<strong>紫色区域</strong>是她的"大脑"，全局唯一；<strong>粉色区域</strong>是她对每个人的"印象"，各自独立；<strong>蓝色区域</strong>是跨场景共享的智能，但带有隐私标记。</span>
+    <span>核心设计原则：<strong>紫色区域</strong>是她的"大脑"，全局唯一；<strong>粉色区域</strong>是她对每个人的"印象"，各自独立；<strong>蓝色区域</strong>是跨场景共享的智能，但带有隐私标记。<strong>渐变边框的 InnerStateManager</strong> 是 v2.1 新增的内心独白层，负责情绪跨日延续和跨对话跟进。</span>
   </div>
 </section>
 
@@ -1264,8 +1396,16 @@ footer {
     <div class="card" onclick="showModInfo('emotion')">
       <div class="card-icon">💛</div>
       <h4>EmotionEngine 情绪引擎</h4>
-      <p>PAD情绪模型（愉悦度-激活度-支配度）+ 依恋系统。情绪会影响她说话的语气、回复速度、表情包选择，甚至她是否想主动找人聊天。</p>
+      <p>PAD情绪模型（愉悦度-激活度-支配度）+ 依恋系统。情绪会影响她说话的语气、回复速度、表情包选择，甚至她是否想主动找人聊天。v2.1 新增 daily_baseline 支持情绪衰减到非零基线。</p>
       <span class="tag">emotion_engine.py</span>
+    </div>
+    <!-- ★ NEW CARD: InnerStateManager -->
+    <div class="card" onclick="showModInfo('innerstate')" style="border:1px solid rgba(192,92,252,0.4);">
+      <div class="card-icon">💭</div>
+      <h4>InnerStateManager 内心状态</h4>
+      <p>v2.1 新增。她的"潜意识层"——每隔2-3小时生成一段内心独白，维护"脑子里挂着的事"（PendingThought），并在起床时用昨天的状态计算今天的情绪基线。让她有跨对话连续性和不可预测的情绪底色。</p>
+      <span class="tag">inner_state.py</span>
+      <span class="tag-new">v2.1 NEW</span>
     </div>
     <div class="card" onclick="showModInfo('relationship')">
       <div class="card-icon">👥</div>
@@ -1276,7 +1416,7 @@ footer {
     <div class="card" onclick="showModInfo('memory')">
       <div class="card-icon">🧠</div>
       <h4>MemoryHub 记忆中枢</h4>
-      <p>三层记忆：情节记忆、语义记忆、情感印记。记忆带隐私标记（来自私聊还是群聊）。支持自然遗忘、模糊化和情感加权。</p>
+      <p>三层记忆：情节记忆、语义记忆、情感印记。记忆带隐私标记（来自私聊还是群聊）。支持自然遗忘、模糊化和情感加权。v2.1 起在 consolidate 完成后 emit memory.consolidated 事件。</p>
       <span class="tag">memory_hub.py</span>
     </div>
     <div class="card" onclick="showModInfo('chatctx')">
@@ -1294,7 +1434,7 @@ footer {
     <div class="card" onclick="showModInfo('expression')">
       <div class="card-icon">✍️</div>
       <h4>ExpressionSynthesizer 表达合成</h4>
-      <p>最终输出层。综合情绪、关系、记忆、上下文、生活状态，生成人格化的消息。根据亲密度调整语气，群聊中自动克制。</p>
+      <p>最终输出层。综合情绪、关系、记忆、上下文、生活状态，生成人格化的消息。v2.1 起 prompt 中新增"心里在转的"区块，融入内心独白。</p>
       <span class="tag">expression.py</span>
     </div>
     <div class="card" onclick="showModInfo('browser')">
@@ -1312,13 +1452,13 @@ footer {
     <div class="card" onclick="showModInfo('proactive')">
       <div class="card-icon">💬</div>
       <h4>ProactiveEngine 主动引擎</h4>
-      <p>触发主动发消息的时机判断：看到有趣内容想分享、想念某人、到了特定时间等。选择最合适的人发送。</p>
+      <p>触发主动发消息的时机判断：看到有趣内容想分享、想念某人、到了特定时间等。v2.1 起新增 follow_up 触发类型，由 PendingThought 驱动。</p>
       <span class="tag">proactive_engine.py</span>
     </div>
     <div class="card" onclick="showModInfo('eventbus')">
       <div class="card-icon">🔌</div>
       <h4>EventBus 事件总线</h4>
-      <p>模块间的发布/订阅通信机制。解耦各模块的依赖关系。情绪变化、生活事件、用户消息等通过事件广播。</p>
+      <p>模块间的发布/订阅通信机制。解耦各模块的依赖关系。v2.1 新增事件：life.woke_up, inner_state.updated, proactive.follow_up_fired, memory.consolidated。</p>
       <span class="tag">event_bus.py</span>
     </div>
   </div>
@@ -1342,53 +1482,42 @@ footer {
         <defs>
           <marker id="fa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#7c5cfc"/></marker>
         </defs>
-        <!-- Steps -->
         <g transform="translate(30,20)">
-          <!-- Step 1 -->
           <rect x="0" y="0" width="140" height="50" rx="8" fill="#222235" stroke="#fc8c5c" stroke-width="1.5"/>
           <text x="70" y="20" text-anchor="middle" font-size="11" fill="#fc8c5c">① 用户发消息</text>
           <text x="70" y="38" text-anchor="middle" font-size="10" fill="#9090b0">Telegram → Bot</text>
 
-          <!-- Step 2 -->
           <rect x="180" y="0" width="140" height="50" rx="8" fill="#222235" stroke="#7c5cfc" stroke-width="1.5"/>
           <text x="250" y="20" text-anchor="middle" font-size="11" fill="#7c5cfc">② 协调器接收</text>
           <text x="250" y="38" text-anchor="middle" font-size="10" fill="#9090b0">handle_message()</text>
           <line x1="142" y1="25" x2="178" y2="25" stroke="#7c5cfc" stroke-width="1.2" marker-end="url(#fa)"/>
 
-          <!-- Branch down from orchestrator -->
           <line x1="250" y1="52" x2="250" y2="80" stroke="#7c5cfc" stroke-width="1"/>
 
-          <!-- Parallel processes -->
-          <!-- 2a: Relationship -->
           <rect x="0" y="85" width="150" height="44" rx="8" fill="#1a1a28" stroke="#fc5c8c" stroke-width="1"/>
           <text x="75" y="105" text-anchor="middle" font-size="10" fill="#fc5c8c">2a. 查找/创建关系档案</text>
           <text x="75" y="120" text-anchor="middle" font-size="9" fill="#666">get_or_create(user_id)</text>
           <line x1="250" y1="80" x2="75" y2="83" stroke="#fc5c8c" stroke-width="0.8"/>
 
-          <!-- 2b: ChatContext -->
           <rect x="170" y="85" width="160" height="44" rx="8" fill="#1a1a28" stroke="#5c8cfc" stroke-width="1"/>
           <text x="250" y="105" text-anchor="middle" font-size="10" fill="#5c8cfc">2b. 更新聊天窗口上下文</text>
           <text x="250" y="120" text-anchor="middle" font-size="9" fill="#666">add_message(chat_id)</text>
 
-          <!-- 2c: Memory buffer -->
           <rect x="350" y="85" width="150" height="44" rx="8" fill="#1a1a28" stroke="#5c8cfc" stroke-width="1"/>
           <text x="425" y="105" text-anchor="middle" font-size="10" fill="#5c8cfc">2c. 记入记忆缓冲区</text>
           <text x="425" y="120" text-anchor="middle" font-size="9" fill="#666">memory.add_message()</text>
           <line x1="250" y1="80" x2="425" y2="83" stroke="#5c8cfc" stroke-width="0.8"/>
 
-          <!-- 2d: Emotion -->
           <rect x="520" y="85" width="150" height="44" rx="8" fill="#1a1a28" stroke="#fc5c8c" stroke-width="1"/>
           <text x="595" y="105" text-anchor="middle" font-size="10" fill="#fc5c8c">2d. 触发情绪变化</text>
           <text x="595" y="120" text-anchor="middle" font-size="9" fill="#666">bus.emit("user.message")</text>
           <line x1="250" y1="80" x2="595" y2="83" stroke="#fc5c8c" stroke-width="0.8"/>
 
-          <!-- Step 3: Expression -->
           <rect x="140" y="165" width="220" height="50" rx="10" fill="rgba(124,92,252,0.15)" stroke="#7c5cfc" stroke-width="1.5"/>
           <text x="250" y="185" text-anchor="middle" font-size="11" fill="#c0b0ff">③ Expression 表达合成</text>
           <text x="250" y="202" text-anchor="middle" font-size="9" fill="#9090b0">compose_reply()</text>
           <line x1="250" y1="131" x2="250" y2="163" stroke="#7c5cfc" stroke-width="1" marker-end="url(#fa)"/>
 
-          <!-- Expression sub-steps -->
           <rect x="0" y="245" width="130" height="36" rx="6" fill="#1a1a28" stroke="#555" stroke-width="0.8"/>
           <text x="65" y="267" text-anchor="middle" font-size="9" fill="#9090b0">收集情绪状态</text>
           <line x1="250" y1="217" x2="65" y2="243" stroke="#555" stroke-width="0.6"/>
@@ -1404,29 +1533,27 @@ footer {
           <text x="500" y="267" text-anchor="middle" font-size="9" fill="#9090b0">获取生活状态</text>
           <line x1="250" y1="217" x2="500" y2="243" stroke="#555" stroke-width="0.6"/>
 
-          <rect x="580" y="245" width="130" height="36" rx="6" fill="#1a1a28" stroke="#555" stroke-width="0.8"/>
-          <text x="645" y="267" text-anchor="middle" font-size="9" fill="#9090b0">获取浏览内容</text>
-          <line x1="250" y1="217" x2="645" y2="243" stroke="#555" stroke-width="0.6"/>
+          <!-- ★ v2.1: New sub-step for inner monologue -->
+          <rect x="580" y="245" width="140" height="36" rx="6" fill="rgba(192,92,252,0.1)" stroke="#c05cfc" stroke-width="0.8"/>
+          <text x="650" y="262" text-anchor="middle" font-size="9" fill="#c05cfc">获取内心独白</text>
+          <text x="650" y="275" text-anchor="middle" font-size="8" fill="#666">inner_state ★</text>
+          <line x1="250" y1="217" x2="650" y2="243" stroke="#c05cfc" stroke-width="0.6"/>
 
-          <!-- Step 4: LLM -->
           <rect x="200" y="310" width="160" height="50" rx="10" fill="#1a1a28" stroke="#fcd05c" stroke-width="1.5"/>
           <text x="280" y="332" text-anchor="middle" font-size="11" fill="#fcd05c">④ 调用 LLM</text>
           <text x="280" y="348" text-anchor="middle" font-size="9" fill="#9090b0">组装 prompt → GPT/Claude</text>
           <line x1="250" y1="283" x2="270" y2="308" stroke="#fcd05c" stroke-width="1" marker-end="url(#fa)"/>
 
-          <!-- Step 5: Post-process -->
           <rect x="200" y="390" width="160" height="50" rx="10" fill="#1a1a28" stroke="#5cfc8c" stroke-width="1.5"/>
           <text x="280" y="410" text-anchor="middle" font-size="11" fill="#5cfc8c">⑤ 后处理</text>
           <text x="280" y="428" text-anchor="middle" font-size="9" fill="#9090b0">分段·延迟·错字·表情包</text>
           <line x1="280" y1="362" x2="280" y2="388" stroke="#5cfc8c" stroke-width="1" marker-end="url(#fa)"/>
 
-          <!-- Step 6: Send -->
           <rect x="200" y="468" width="160" height="44" rx="8" fill="#222235" stroke="#fc8c5c" stroke-width="1.5"/>
           <text x="280" y="490" text-anchor="middle" font-size="11" fill="#fc8c5c">⑥ 逐条发送</text>
           <text x="280" y="505" text-anchor="middle" font-size="9" fill="#9090b0">typing... → 发送 → 延迟 → 下条</text>
           <line x1="280" y1="442" x2="280" y2="466" stroke="#555" stroke-width="1" marker-end="url(#fa)"/>
 
-          <!-- Side: Record own messages -->
           <rect x="500" y="390" width="160" height="44" rx="8" fill="#1a1a28" stroke="#5c8cfc" stroke-width="0.8"/>
           <text x="580" y="410" text-anchor="middle" font-size="9" fill="#5c8cfc">记录自己的回复</text>
           <text x="580" y="425" text-anchor="middle" font-size="8" fill="#666">memory + chatctx + relationship</text>
@@ -1453,51 +1580,41 @@ footer {
           <text x="290" y="38" text-anchor="middle" font-size="10" fill="#9090b0">同私聊 step 2</text>
           <line x1="162" y1="25" x2="198" y2="25" stroke="#7c5cfc" stroke-width="1" marker-end="url(#fa)"/>
 
-          <!-- Decision Point -->
           <polygon points="470,5 540,25 470,45 400,25" fill="#1a1a28" stroke="#fcd05c" stroke-width="1.5"/>
           <text x="470" y="29" text-anchor="middle" font-size="10" fill="#fcd05c">③ 要回吗？</text>
           <line x1="382" y1="25" x2="400" y2="25" stroke="#fcd05c" stroke-width="1" marker-end="url(#fa)"/>
 
-          <!-- NO path -->
           <line x1="540" y1="25" x2="620" y2="25" stroke="#fc5c5c" stroke-width="1.2" marker-end="url(#fc)"/>
           <rect x="622" y="5" width="120" height="40" rx="8" fill="#1a1a28" stroke="#fc5c5c" stroke-width="1"/>
           <text x="682" y="22" text-anchor="middle" font-size="11" fill="#fc5c5c">❌ 不回复</text>
           <text x="682" y="38" text-anchor="middle" font-size="9" fill="#666">return None</text>
 
-          <!-- YES path -->
           <line x1="470" y1="47" x2="470" y2="80" stroke="#5cfc8c" stroke-width="1.2" marker-end="url(#fb)"/>
 
-          <!-- GroupBehavior Decision Factors -->
           <rect x="140" y="85" width="660" height="100" rx="10" fill="rgba(92,252,140,0.05)" stroke="#5cfc8c" stroke-width="1" stroke-dasharray="4 3"/>
           <text x="160" y="105" font-size="10" font-weight="600" fill="#5cfc8c">GroupBehaviorEngine.should_respond() 决策因子：</text>
-
           <text x="160" y="128" font-size="10" fill="#9090b0">🔹 被@了 → 必须回</text>
           <text x="160" y="148" font-size="10" fill="#9090b0">🔹 被叫名字 → 必须回</text>
           <text x="160" y="168" font-size="10" fill="#9090b0">🔹 发送者亲密度 → closeness × 0.25</text>
-
           <text x="430" y="128" font-size="10" fill="#9090b0">🔹 话题匹配兴趣 → +0.15</text>
           <text x="430" y="148" font-size="10" fill="#9090b0">🔹 性格外向性 → extraversion × 0.08</text>
           <text x="430" y="168" font-size="10" fill="#9090b0">🔹 心情好/差 → ±0.08 ~ 0.10</text>
 
-          <!-- Reply Mode -->
           <rect x="250" y="215" width="180" height="50" rx="10" fill="#1a1a28" stroke="#5cfc8c" stroke-width="1.5"/>
           <text x="340" y="236" text-anchor="middle" font-size="11" fill="#5cfc8c">④ 回复模式</text>
           <text x="340" y="252" text-anchor="middle" font-size="9" fill="#9090b0">direct / reaction / piggyback</text>
           <line x1="340" y1="187" x2="340" y2="213" stroke="#5cfc8c" stroke-width="1" marker-end="url(#fb)"/>
 
-          <!-- Expression with group adjustments -->
           <rect x="200" y="295" width="280" height="60" rx="10" fill="rgba(124,92,252,0.15)" stroke="#7c5cfc" stroke-width="1.5"/>
           <text x="340" y="318" text-anchor="middle" font-size="11" fill="#c0b0ff">⑤ Expression 表达合成（群聊模式）</text>
           <text x="340" y="338" text-anchor="middle" font-size="9" fill="#9090b0">更短·更克制·不暴露私聊信息·最多2条</text>
           <line x1="340" y1="267" x2="340" y2="293" stroke="#7c5cfc" stroke-width="1" marker-end="url(#fa)"/>
 
-          <!-- Privacy filter -->
           <rect x="550" y="298" width="200" height="52" rx="8" fill="#1a1a28" stroke="#fc5c8c" stroke-width="1" stroke-dasharray="3 2"/>
           <text x="650" y="318" text-anchor="middle" font-size="10" fill="#fc5c8c">⚠️ 隐私过滤器</text>
           <text x="650" y="336" text-anchor="middle" font-size="9" fill="#666">private_hints → 知道但不说</text>
           <line x1="482" y1="320" x2="548" y2="320" stroke="#fc5c8c" stroke-width="0.8" stroke-dasharray="3 2"/>
 
-          <!-- Send -->
           <rect x="270" y="385" width="140" height="44" rx="8" fill="#222235" stroke="#fc8c5c" stroke-width="1.5"/>
           <text x="340" y="405" text-anchor="middle" font-size="11" fill="#fc8c5c">⑥ 回复到群聊</text>
           <text x="340" y="421" text-anchor="middle" font-size="9" fill="#9090b0">reply_to 原消息</text>
@@ -1512,33 +1629,33 @@ footer {
       <div class="timeline-item">
         <div class="meta">STEP 1 — 触发评估</div>
         <h4>ProactiveEngine.evaluate()</h4>
-        <p>定期（每5分钟）检查是否有主动发消息的触发条件。来源包括：看到有趣内容想分享、想念某人（依恋度高 + 久未联系）、到了特定时间点（早安/晚安）、情绪需要倾诉。</p>
+        <p>定期（每5分钟）检查是否有主动发消息的触发条件。来源包括：看到有趣内容想分享、想念某人（依恋度高 + 久未联系）、到了特定时间点（早安/晚安）、情绪需要倾诉、<strong style="color:var(--pink);">以及 v2.1 新增的 follow_up 触发器——由 PendingThought 驱动的"想跟进某件事"</strong>。</p>
       </div>
       <div class="timeline-item">
         <div class="meta">STEP 2 — 选择目标</div>
         <h4>选择发给谁</h4>
-        <p>按亲密度排序，选择最适合的对象。比如想分享音乐相关内容→选常聊音乐的朋友；想倾诉→选最亲近的人。不会给不太熟的人突然发消息。</p>
+        <p>按亲密度排序，选择最适合的对象。对于 follow_up 类型，目标由 PendingThought.target_user_id 直接指定——她记得要找谁说这件事。其他类型按原逻辑选择。</p>
       </div>
       <div class="timeline-item">
         <div class="meta">STEP 3 — 生成消息</div>
         <h4>Expression.compose_proactive()</h4>
-        <p>和普通回复的生成流程相同，但 prompt 中标明是"主动想说"而非"回复对方"。内容更随意：分享链接、吐槽、日常碎碎念。</p>
+        <p>和普通回复的生成流程相同，但 prompt 中标明是"主动想说"而非"回复对方"。内容更随意：分享链接、吐槽、日常碎碎念、或者跟进之前的话题。</p>
       </div>
       <div class="timeline-item">
-        <div class="meta">STEP 4 — 发送</div>
+        <div class="meta">STEP 4 — 发送 & 清理</div>
         <h4>通过已注册的回调发送</h4>
-        <p>orchestrator 为每个聊天窗口注册了 proactive_callback。触发后直接发送到对应的 Telegram 聊天。</p>
+        <p>orchestrator 为每个聊天窗口注册了 proactive_callback。触发后直接发送到对应的 Telegram 聊天。<strong style="color:var(--pink);">v2.1：若触发类型为 follow_up 且发送成功，emit proactive.follow_up_fired 事件，InnerStateManager 自动将对应的 PendingThought 从列表中移除。</strong></p>
       </div>
     </div>
   </div>
 
   <div id="flow-background" class="tab-content">
     <div class="code-block">
-<span class="comment">## 5个后台循环任务，持续运行</span>
+<span class="comment">## 6个后台循环任务，持续运行</span>
 
 <span class="keyword">Loop 1:</span> <span class="string">_life_tick_loop</span>         <span class="comment"># 每15分钟</span>
   → LifeSimulator.tick()              <span class="comment"># 更新作息/体力/位置</span>
-  → EmotionEngine.passive_decay()     <span class="comment"># 情绪自然衰减</span>
+  → EmotionEngine.passive_decay()     <span class="comment"># 情绪自然衰减（v2.1:衰减到daily_baseline而非0）</span>
 
 <span class="keyword">Loop 2:</span> <span class="string">_browse_loop</span>             <span class="comment"># 每60分钟</span>
   → BrowserAgent.should_browse()      <span class="comment"># 判断是否要刷手机</span>
@@ -1546,17 +1663,232 @@ footer {
   → EventBus → emotion_change         <span class="comment"># 浏览内容影响情绪</span>
 
 <span class="keyword">Loop 3:</span> <span class="string">_proactive_loop</span>          <span class="comment"># 每5分钟</span>
-  → ProactiveEngine.evaluate()        <span class="comment"># 是否主动发消息</span>
+  → ProactiveEngine.evaluate()        <span class="comment"># 是否主动发消息（含follow_up触发器）</span>
   → → 选择目标 → Expression → 发送
 
 <span class="keyword">Loop 4:</span> <span class="string">_memory_loop</span>             <span class="comment"># 每6小时</span>
   → MemoryHub.consolidate()           <span class="comment"># 缓冲区→长期记忆</span>
   → MemoryHub.forget_and_distort()    <span class="comment"># 自然遗忘+扭曲</span>
+  → <span class="keyword">emit</span> memory.consolidated          <span class="comment"># ★ v2.1: 通知InnerState</span>
 
 <span class="keyword">Loop 5:</span> <span class="string">_conversation_end_check</span>  <span class="comment"># 每2分钟</span>
   → 检测30分钟无互动的窗口             <span class="comment"># 标记会话结束</span>
   → 触发该窗口的记忆整合               <span class="comment"># 及时巩固</span>
+
+<span class="keyword">Loop 6:</span> <span class="string">_inner_state_loop</span>       <span class="comment"># ★ v2.1 NEW: 每2~3小时（随机间隔）</span>
+  → <span class="keyword">if</span> is_sleeping: <span class="keyword">skip</span>             <span class="comment"># 睡着了不生成独白</span>
+  → InnerStateManager.generate()      <span class="comment"># 收集上下文 → LLM → 独白快照</span>
+  → 更新 monologue + pending_thoughts <span class="comment"># 清理过期thoughts，新增新的</span>
+  → <span class="keyword">emit</span> inner_state.updated           <span class="comment"># 通知proactive_engine等</span>
+  → 持久化到 data/inner_state.json    <span class="comment"># 重启不丢失</span>
+
+<span class="comment">## 事件驱动（不是loop，由EventBus触发）</span>
+<span class="keyword">Event:</span> <span class="string">life.woke_up</span>             <span class="comment"># ★ v2.1: 起床时触发</span>
+  → InnerStateManager.on_wake_up()    <span class="comment"># 用昨天状态计算今日mood_baseline</span>
+  → EmotionEngine.set_daily_baseline()<span class="comment"># 设置情绪衰减地板</span>
+
+<span class="keyword">Event:</span> <span class="string">life.sleeping</span>             <span class="comment"># ★ v2.1: 入睡时触发</span>
+  → 快照 emotion.valence → yesterday_final_valence
+  → 持久化
     </div>
+  </div>
+</section>
+
+<!-- ============ Section: Inner State ★ NEW ============ -->
+<section id="innerstate">
+  <h2><span class="icon">💭</span> 内心状态系统</h2>
+  <p class="section-desc">v2.1 新增。解决两个让人格显得"机器味"的核心缺陷：跨对话没有连续性，以及情绪过于稳定可预测。</p>
+
+  <div class="alert alert-new" style="margin-bottom:28px;">
+    <span class="alert-icon">✨</span>
+    <span>InnerStateManager 是她的"潜意识层"——她会在脑子里默默琢磨事情、情绪会从昨天延续到今天、她会记得要跟某个人聊某件事。这些让她不再像每次对话都是全新启动的机器。</span>
+  </div>
+
+  <h3>解决的两个问题</h3>
+  <div class="card-grid" style="grid-template-columns:1fr 1fr;margin-bottom:28px;">
+    <div class="card" style="border-left:4px solid var(--red);">
+      <h4>❌ 问题 1：跨对话没有连续性</h4>
+      <p>她不会主动跟进之前提过的事，每次对话像是全新开始。relationship.py 的 unresolved 字段存在但从未被填充或消费。</p>
+    </div>
+    <div class="card" style="border-left:4px solid var(--red);">
+      <h4>❌ 问题 2：情绪过于稳定可预测</h4>
+      <p>emotion_engine 的衰减是纯数学的，缺少无由来的坏心情、隔天情绪延续、以及"今天就是心情不好"这类真实的情绪底色。</p>
+    </div>
+  </div>
+
+  <h3>三大支柱</h3>
+  <div class="inner-pillar-grid">
+    <div class="inner-pillar inner-pillar-mono">
+      <div class="pillar-icon">🫧</div>
+      <h4>内心独白 Inner Monologue</h4>
+      <p>每隔 2~3 小时（随机间隔），她会生成一段"内心独白"——对当前状态、最近发生的事、心里挂着的事的一小段自言自语。这段独白会被注入到 expression.py 的 prompt 中，自然地影响她说话的语气和内容。</p>
+      <div class="pillar-example">"最近总有点心不在焉，也不知道为什么…上次小明说的那个项目后来怎样了，改天问问他吧。"</div>
+      <p style="margin-top:8px;font-size:12px;color:var(--text2);">独白的 <code style="background:var(--surface3);padding:1px 6px;border-radius:4px;font-size:11px;">mood_tint</code> 仅供 prompt 注入，不与 EmotionEngine 的 daily_baseline 互换。</p>
+    </div>
+    <div class="inner-pillar inner-pillar-pending">
+      <div class="pillar-icon">📌</div>
+      <h4>悬而未决 Pending Thoughts</h4>
+      <p>她脑子里"挂着"的事——想问某人某件事、想跟进某个话题、想分享某个发现。每条 PendingThought 绑定目标用户，有紧急度和过期时间（默认48小时）。这是跨对话连续性的核心载体。</p>
+      <div class="pillar-example">
+        <div style="margin-bottom:6px;">📌 "想问小明那个项目后来怎样了" → target: 小明 · urgency: 0.6</div>
+        <div>📌 "昨天看到一首歌想分享给你" → target: 你 · urgency: 0.4</div>
+      </div>
+      <p style="margin-top:8px;font-size:12px;color:var(--text2);">过期自动遗忘，发送成功后自动移除，也可在独白生成时被 LLM 标记为 resolved。</p>
+    </div>
+    <div class="inner-pillar inner-pillar-mood">
+      <div class="pillar-icon">🌅</div>
+      <h4>情绪跨日延续 Mood Continuity</h4>
+      <p>起床时，今天的情绪不再从零开始——它由昨天的最终情绪状态、随机扰动、星期权重和睡眠质量共同决定。这让她有"今天就是莫名心情不好"的真实感。</p>
+      <div class="pillar-example">
+        今日 baseline = 昨日 × 0.4 + 随机(±0.15) + 星期权重 + 睡眠影响
+      </div>
+    </div>
+  </div>
+
+  <h3>起床情绪公式</h3>
+  <div class="code-block">
+<span class="comment"># InnerStateManager.on_wake_up() — 由 life.woke_up 事件触发</span>
+
+<span class="keyword">today_baseline</span> =
+    yesterday_final_valence × <span class="number">0.4</span>              <span class="comment"># 延续感，但不完全继承</span>
+  + random.uniform(<span class="number">-0.15</span>, <span class="number">+0.15</span>)              <span class="comment"># 无由来的情绪波动</span>
+  + weekday_weight                                <span class="comment"># 周一 -0.05，周五 +0.05，周末 +0.03</span>
+  + (<span class="number">-0.1</span> <span class="keyword">if</span> sleep_debt > <span class="number">30</span> <span class="keyword">else</span> <span class="number">0</span>)            <span class="comment"># 睡眠债影响</span>
+
+<span class="comment"># 然后调用：</span>
+emotion_engine.set_daily_baseline(today_baseline)
+<span class="comment"># 此后 passive_decay() 中 valence 衰减到 daily_baseline 而非 0：</span>
+<span class="comment">#   valence = baseline + (valence - baseline) × 0.98</span>
+<span class="comment"># arousal 和 irritability 继续按原逻辑衰减到 0</span>
+  </div>
+
+  <h3>情绪跨日示例</h3>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin:12px 0;">
+    <div class="mood-day-row">
+      <span class="mood-day-label">周三</span>
+      <div class="mood-day-bar"><div class="mood-day-fill" style="width:65%;background:linear-gradient(90deg,#5c8cfc,#5cfc8c);margin-left:35%;"></div></div>
+      <span class="mood-day-val" style="color:#5cfc8c">+0.30</span>
+      <span class="mood-day-note">和你聊得很开心，晚上心情不错</span>
+    </div>
+    <div class="mood-day-row">
+      <span class="mood-day-label">周四</span>
+      <div class="mood-day-bar"><div class="mood-day-fill" style="width:58%;background:linear-gradient(90deg,#5c8cfc,#5cfc8c);margin-left:42%;"></div></div>
+      <span class="mood-day-val" style="color:#5c8cfc">+0.16</span>
+      <span class="mood-day-note">= 0.30×0.4 + 随机(+0.04) + 周四(0.0)</span>
+    </div>
+    <div class="mood-day-row">
+      <span class="mood-day-label">周五</span>
+      <div class="mood-day-bar"><div class="mood-day-fill" style="width:55%;background:linear-gradient(90deg,#5c8cfc,#7c5cfc);margin-left:45%;"></div></div>
+      <span class="mood-day-val" style="color:#7c5cfc">+0.08</span>
+      <span class="mood-day-note">= 0.16×0.4 + 随机(-0.03) + 周五(+0.05)</span>
+    </div>
+    <div class="mood-day-row">
+      <span class="mood-day-label">周六</span>
+      <div class="mood-day-bar"><div class="mood-day-fill" style="width:38%;background:linear-gradient(90deg,#fc5c8c,#fc8c5c);margin-left:50%;"></div></div>
+      <span class="mood-day-val" style="color:#fc5c8c">-0.12</span>
+      <span class="mood-day-note">= 0.08×0.4 + 随机(-0.12) + 周末(-0.03) 🎲坏运气</span>
+    </div>
+    <div class="mood-day-row">
+      <span class="mood-day-label">周日</span>
+      <div class="mood-day-bar"><div class="mood-day-fill" style="width:48%;background:linear-gradient(90deg,#fcd05c,#5c8cfc);margin-left:46%;"></div></div>
+      <span class="mood-day-val" style="color:#fcd05c">+0.02</span>
+      <span class="mood-day-note">= -0.12×0.4 + 随机(+0.10) + 周末(+0.03) 回暖</span>
+    </div>
+  </div>
+
+  <h3>独白生成上下文</h3>
+  <p style="color:var(--text2);font-size:13px;margin-bottom:16px;">每次生成独白时，LLM 会收到以下上下文作为输入：</p>
+  <div class="card-grid" style="grid-template-columns:repeat(auto-fit, minmax(200px,1fr));">
+    <div class="card" style="padding:16px;">
+      <h4 style="font-size:13px;">💛 情绪状态</h4>
+      <p style="font-size:12px;">valence, arousal, irritability</p>
+    </div>
+    <div class="card" style="padding:16px;">
+      <h4 style="font-size:13px;">🌙 生活状态</h4>
+      <p style="font-size:12px;">在做什么、体力、位置</p>
+    </div>
+    <div class="card" style="padding:16px;">
+      <h4 style="font-size:13px;">📅 近期事件</h4>
+      <p style="font-size:12px;">过去3小时的notable events</p>
+    </div>
+    <div class="card" style="padding:16px;">
+      <h4 style="font-size:13px;">💬 近期对话</h4>
+      <p style="font-size:12px;">memory.consolidated 提供的摘要</p>
+    </div>
+    <div class="card" style="padding:16px;">
+      <h4 style="font-size:13px;">📌 当前 Thoughts</h4>
+      <p style="font-size:12px;">现有的pending_thoughts列表</p>
+    </div>
+  </div>
+
+  <h3>与现有模块的集成点</h3>
+  <div style="overflow-x:auto;">
+    <table class="cmd-table">
+      <thead>
+        <tr>
+          <th>模块</th>
+          <th>变更</th>
+          <th>说明</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>expression.py</code></td>
+          <td>prompt 新增区块</td>
+          <td class="desc">在"此刻状态"后追加 <code>## 你心里在转的 {monologue}</code>，不改结构</td>
+        </tr>
+        <tr>
+          <td><code>proactive_engine.py</code></td>
+          <td>新增 follow_up 触发器</td>
+          <td class="desc">订阅 inner_state.updated，将 target_user_id > 0 的 PendingThought 转为触发器</td>
+        </tr>
+        <tr>
+          <td><code>emotion_engine.py</code></td>
+          <td>新增 daily_baseline</td>
+          <td class="desc">set_daily_baseline() + passive_decay() 衰减到基线而非零</td>
+        </tr>
+        <tr>
+          <td><code>memory_hub.py</code></td>
+          <td>consolidate 后 emit 事件</td>
+          <td class="desc">每个 chat_id 处理完后 emit memory.consolidated 供独白生成消费</td>
+        </tr>
+        <tr>
+          <td><code>life_simulator.py</code></td>
+          <td>起床/入睡事件</td>
+          <td class="desc">emit life.woke_up 和 life.sleeping 事件</td>
+        </tr>
+        <tr>
+          <td><code>orchestrator.py</code></td>
+          <td>新增 loop + 事件</td>
+          <td class="desc">_inner_state_loop + follow_up_fired 事件 emit</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>边界条件</h3>
+  <div class="card-grid" style="grid-template-columns:repeat(auto-fit, minmax(250px,1fr));">
+    <div class="card" style="padding:16px;">
+      <h4 style="font-size:13px;">🆕 首次启动</h4>
+      <p style="font-size:12px;">yesterday_final_valence = 0，daily_baseline = 0，随机扰动正常工作</p>
+    </div>
+    <div class="card" style="padding:16px;">
+      <h4 style="font-size:13px;">❌ LLM 调用失败</h4>
+      <p style="font-size:12px;">保留上一次 monologue，不更新 pending_thoughts</p>
+    </div>
+    <div class="card" style="padding:16px;">
+      <h4 style="font-size:13px;">⏰ Thought 过期</h4>
+      <p style="font-size:12px;">每次生成独白时清理 expires_at < now 的条目（默认48h）</p>
+    </div>
+    <div class="card" style="padding:16px;">
+      <h4 style="font-size:13px;">😴 睡眠中</h4>
+      <p style="font-size:12px;">跳过独白生成。入睡时快照 valence 到 yesterday_final_valence</p>
+    </div>
+  </div>
+
+  <div class="alert alert-warn" style="margin-top:16px;">
+    <span class="alert-icon">⚠️</span>
+    <span><strong>mood_tint ≠ daily_baseline</strong>：独白的 mood_tint 是主观色调，仅供 expression prompt 使用；daily_baseline 是 EmotionEngine 的衰减地板，仅在起床时设置一次。两者是不同概念，不可互换。</span>
   </div>
 </section>
 
@@ -1768,17 +2100,19 @@ base_prob += extraversion × <span class="number">0.08</span> <span class="comme
     ├── <span class="file">life_simulator.py</span> <span class="desc"># 生活模拟</span><br>
     ├── <span class="file">emotion_engine.py</span> <span class="desc"># 情绪引擎</span><br>
     ├── <span class="file">memory_hub.py</span> <span class="desc"># 记忆中枢</span><br>
-    ├── <span class="file">relationship.py</span> <span class="desc"># 关系系统 ★ NEW</span><br>
-    ├── <span class="file">chat_context.py</span> <span class="desc"># 聊天上下文 ★ NEW</span><br>
-    ├── <span class="file">group_behavior.py</span> <span class="desc"># 群聊行为 ★ NEW</span><br>
-    ├── <span class="file">expression.py</span> <span class="desc"># 表达合成（增强）</span><br>
+    ├── <span class="file">relationship.py</span> <span class="desc"># 关系系统</span><br>
+    ├── <span class="file">chat_context.py</span> <span class="desc"># 聊天上下文</span><br>
+    ├── <span class="file">group_behavior.py</span> <span class="desc"># 群聊行为</span><br>
+    ├── <span class="file">expression.py</span> <span class="desc"># 表达合成（v2.1: +独白注入）</span><br>
+    ├── <span class="file new-file">inner_state.py</span> <span class="desc"># ★ v2.1 NEW 内心状态管理</span><br>
     ├── <span class="file">sticker_engine.py</span> <span class="desc"># 表情包引擎</span><br>
     ├── <span class="file">browser_agent.py</span> <span class="desc"># 浏览代理</span><br>
-    ├── <span class="file">proactive_engine.py</span> <span class="desc"># 主动消息引擎</span><br>
+    ├── <span class="file">proactive_engine.py</span> <span class="desc"># 主动消息引擎（v2.1: +follow_up）</span><br>
     ├── <span class="file">event_bus.py</span> <span class="desc"># 事件总线</span><br>
     ├── <span class="file">llm.py</span> <span class="desc"># LLM客户端</span><br>
     └── <span class="dir">data/</span><br>
     &nbsp;&nbsp;&nbsp;&nbsp;├── <span class="file">relationships.json</span> <span class="desc"># 关系持久化</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;├── <span class="file new-file">inner_state.json</span> <span class="desc"># ★ v2.1 NEW 内心状态持久化</span><br>
     &nbsp;&nbsp;&nbsp;&nbsp;├── <span class="file">stickers.json</span> <span class="desc"># 表情包库</span><br>
     &nbsp;&nbsp;&nbsp;&nbsp;└── <span class="dir">chroma/</span> <span class="desc"># 向量记忆数据库</span>
   </div>
@@ -1837,6 +2171,8 @@ python main.py
   <span class="param">browse_interval_seconds:</span> <span class="number">3600</span>
   <span class="param">proactive_check_seconds:</span> <span class="number">300</span>
   <span class="param">memory_consolidation_hours:</span> <span class="number">6</span>
+  <span class="param">inner_state_interval_hours:</span> [<span class="number">2</span>, <span class="number">3</span>]     <span class="comment"># ★ v2.1: 独白生成随机间隔</span>
+  <span class="param">pending_thought_ttl_hours:</span> <span class="number">48</span>           <span class="comment"># ★ v2.1: PendingThought 过期时间</span>
   </div>
 
   <h3>启动后的初始化流程</h3>
@@ -1848,13 +2184,13 @@ python main.py
     </div>
     <div class="timeline-item" style="border-left-color:#5c8cfc;">
       <div class="meta">STEP 2</div>
-      <h4>加载已有的关系和记忆</h4>
-      <p>从 data/relationships.json 和 data/chroma/ 加载持久化数据。第一次启动为空。</p>
+      <h4>加载已有的关系、记忆和内心状态</h4>
+      <p>从 data/relationships.json、data/chroma/ 和 data/inner_state.json 加载持久化数据。第一次启动为空，daily_baseline 默认为 0。</p>
     </div>
     <div class="timeline-item" style="border-left-color:#7c5cfc;">
       <div class="meta">STEP 3</div>
       <h4>启动后台循环</h4>
-      <p>5个异步循环任务开始运行（生活模拟、浏览、主动消息、记忆整合、会话检测）。</p>
+      <p>6个异步循环任务开始运行（生活模拟、浏览、主动消息、记忆整合、会话检测、<strong style="color:var(--pink);">内心独白生成 ★</strong>）。</p>
     </div>
     <div class="timeline-item" style="border-left-color:#fcd05c;">
       <div class="meta">STEP 4</div>
@@ -1947,6 +2283,11 @@ python main.py
         </tr>
       </tbody>
     </table>
+  </div>
+
+  <div class="alert alert-info" style="margin-top:16px;">
+    <span class="alert-icon">ℹ️</span>
+    <span>v2.1 设计中，<strong>独白内容不对外暴露</strong>——不新增 /inner_state 命令或 /status 字段。内心状态仅在系统内部流转。</span>
   </div>
 </section>
 
@@ -2173,6 +2514,92 @@ python main.py
       </div>
     </div>
   </div>
+
+  <!-- ★ NEW SCENARIO -->
+  <div class="scenario">
+    <div class="scenario-header">
+      <span class="num num-new">8</span>
+      <h4>跨对话跟进 —— 她记得要问你的事 <span style="font-size:11px;color:var(--pink);font-weight:400;">★ v2.1</span></h4>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="scenario-body">
+      <div class="scenario-body-inner">
+        <p style="margin-top:12px;color:var(--text2);">你昨天跟她提了一件事，她今天主动追问后续——像真人一样记挂着。</p>
+        <div class="code-block">
+<span class="comment"># 场景时间线：</span>
+
+<span class="comment"># Day 1, 22:00 — 你跟她聊天</span>
+<span class="string">你："明天有个面试 有点紧张"</span>
+<span class="string">她："加油！你肯定行的 💪"</span>
+
+<span class="comment"># Day 1, 22:30 — 记忆整合触发 memory.consolidated</span>
+<span class="comment"># InnerStateManager 收到对话摘要</span>
+
+<span class="comment"># Day 1, 23:00 — 独白生成（Loop 6）</span>
+<span class="comment"># LLM 输出：</span>
+{
+  <span class="string">"monologue"</span>: <span class="string">"他明天有面试，不知道紧不紧张，得记得问问结果"</span>,
+  <span class="string">"new_pending_thoughts"</span>: [{
+    <span class="string">"content"</span>: <span class="string">"想问他面试怎么样了"</span>,
+    <span class="string">"target_user_id"</span>: <span class="number">12345</span>,
+    <span class="string">"urgency"</span>: <span class="number">0.7</span>,
+    <span class="string">"source"</span>: <span class="string">"conversation"</span>
+  }]
+}
+
+<span class="comment"># Day 2, 18:00 — ProactiveEngine.evaluate()</span>
+<span class="comment"># 发现 pending_thought target=12345, urgency=0.7</span>
+<span class="comment"># 转成 follow_up 触发器，选中执行</span>
+
+<span class="comment"># → Expression 生成：</span>
+<span class="string">她（主动发来）："对了 你今天面试怎么样呀？顺利吗？"</span>
+
+<span class="comment"># → 发送成功 → emit proactive.follow_up_fired</span>
+<span class="comment"># → InnerStateManager 移除该 PendingThought</span>
+        </div>
+        <div class="alert alert-tip" style="margin-top:12px;">
+          <span class="alert-icon">💡</span>
+          <span>PendingThought 有48小时过期时间。如果她一直没机会发（比如你两天没上线），这件事会自然被遗忘——就像真人也会渐渐忘掉想问的事。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ★ NEW SCENARIO -->
+  <div class="scenario">
+    <div class="scenario-header">
+      <span class="num num-new">9</span>
+      <h4>她今天就是心情不好 <span style="font-size:11px;color:var(--pink);font-weight:400;">★ v2.1</span></h4>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="scenario-body">
+      <div class="scenario-body-inner">
+        <p style="margin-top:12px;color:var(--text2);">不需要任何触发事件，她起床后就是有点低落——真人也会这样。</p>
+        <div class="code-block">
+<span class="comment"># 起床时 on_wake_up() 计算：</span>
+<span class="comment"># yesterday_final_valence = 0.05 （昨天比较平淡）</span>
+<span class="comment"># random = -0.13 （运气不好，随机扰动偏负）</span>
+<span class="comment"># weekday = -0.05 （周一）</span>
+<span class="comment"># sleep_debt = 35min → -0.1</span>
+
+today_baseline = <span class="number">0.05</span> × <span class="number">0.4</span> + (<span class="number">-0.13</span>) + (<span class="number">-0.05</span>) + (<span class="number">-0.1</span>)
+               = <span class="number">0.02</span> - <span class="number">0.13</span> - <span class="number">0.05</span> - <span class="number">0.1</span>
+               = <span class="number">-0.26</span>
+
+<span class="comment"># EmotionEngine.daily_baseline = -0.26</span>
+<span class="comment"># 今天所有情绪衰减都会趋向 -0.26 而非 0</span>
+<span class="comment"># 即使有开心的事，衰减后也会回到微微低落</span>
+
+<span class="comment"># 独白可能生成：</span>
+<span class="string">"今天不知道怎么回事，就是提不起劲…"</span>
+
+<span class="comment"># 聊天时语气会更平淡、回复更短、表情包更少</span>
+<span class="comment"># 但如果你跟她说了什么真正开心的事，</span>
+<span class="comment"># 情绪仍然会被拉上去——只是衰减得比平时更快回到低点</span>
+        </div>
+      </div>
+    </div>
+  </div>
 </section>
 
 <!-- ============ Section: FAQ ============ -->
@@ -2210,7 +2637,7 @@ python main.py
     </div>
     <div class="scenario-body">
       <div class="scenario-body-inner">
-        <p style="margin-top:12px;color:var(--text2);">每次回复调用1次 expression LLM（prompt约2000 token + 回复约200 token）。如果使用 GPT-4o-mini，大约 $0.001/次。关系深度反思（每20次对话1次）和记忆整合（每6小时1次）各额外调用1次 utility LLM。日常聊天量约100条/天的话，月费用大约 $3-5（GPT-4o-mini）或 $15-25（GPT-4o）。</p>
+        <p style="margin-top:12px;color:var(--text2);">每次回复调用1次 expression LLM（prompt约2000 token + 回复约200 token）。如果使用 GPT-4o-mini，大约 $0.001/次。关系深度反思（每20次对话1次）和记忆整合（每6小时1次）各额外调用1次 utility LLM。v2.1 的内心独白生成每2~3小时1次，使用 utility tier LLM，额外增加约 $0.5~1/月。日常聊天量约100条/天的话，月费用大约 $4-6（GPT-4o-mini）或 $16-28（GPT-4o）。</p>
       </div>
     </div>
   </div>
@@ -2234,7 +2661,7 @@ python main.py
     </div>
     <div class="scenario-body">
       <div class="scenario-body-inner">
-        <p style="margin-top:12px;color:var(--text2);">可以。Orchestrator 是平台无关的。bot.py 只是 Telegram 的适配层。你可以写一个 discord_bot.py、wechat_bot.py、或者 web_api.py，只要调用 orchestrator.handle_message() 并传入正确的参数即可。核心的关系/记忆/情绪系统完全不依赖 Telegram。</p>
+        <p style="margin-top:12px;color:var(--text2);">可以。Orchestrator 是平台无关的。bot.py 只是 Telegram 的适配层。你可以写一个 discord_bot.py、wechat_bot.py、或者 web_api.py，只要调用 orchestrator.handle_message() 并传入正确的参数即可。核心的关系/记忆/情绪/内心状态系统完全不依赖 Telegram。</p>
       </div>
     </div>
   </div>
@@ -2247,6 +2674,31 @@ python main.py
     <div class="scenario-body">
       <div class="scenario-body-inner">
         <p style="margin-top:12px;color:var(--text2);">在prompt中明确指示"不要说作为AI"。但这不是万无一失的——如果用户直接问"你是AI吗"，LLM 可能会出戏。建议在 persona 设定中加入对这种问题的预设反应（比如"开玩笑的吧？""你说呢？"等回避策略）。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ★ NEW FAQ -->
+  <div class="scenario">
+    <div class="scenario-header">
+      <h4>Q: 内心独白会暴露给用户吗？ <span style="font-size:11px;color:var(--pink);font-weight:400;">★ v2.1</span></h4>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="scenario-body">
+      <div class="scenario-body-inner">
+        <p style="margin-top:12px;color:var(--text2);">不会。独白内容仅在系统内部流转——注入到 expression.py 的 prompt 中影响语气和内容，但不会直接输出给用户，也不会出现在 /status 命令中。用户只会感受到"她今天说话的感觉不太一样"，而不会看到"内心独白：xxx"这样的文字。这是设计上的刻意选择。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="scenario">
+    <div class="scenario-header">
+      <h4>Q: PendingThought 会不会太频繁地触发主动消息？ <span style="font-size:11px;color:var(--pink);font-weight:400;">★ v2.1</span></h4>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="scenario-body">
+      <div class="scenario-body-inner">
+        <p style="margin-top:12px;color:var(--text2);">不会。PendingThought 的 follow_up 触发器与现有的 missing / mood_share / life_event 触发器并存，共同竞争 ProactiveEngine 的发送机会。ProactiveEngine 本身有频率限制（每5分钟评估一次，但不是每次都会发）。而且如果 target_user_id 对应的用户没有注册 proactive_callback，该 thought 会被跳过。过期时间默认48小时，可以在 config.yaml 中调整。</p>
       </div>
     </div>
   </div>
@@ -2280,12 +2732,11 @@ python main.py
 </div>
 
 <footer>
-  <p>Virtual Persona System v2.0 — Multi-Relationship Architecture</p>
-  <p style="margin-top:4px;opacity:0.5;">单一个体 · 多重关系 · 真实社交模拟</p>
+  <p>Virtual Persona System v2.1 — Multi-Relationship Architecture + Inner State Manager</p>
+  <p style="margin-top:4px;opacity:0.5;">单一个体 · 多重关系 · 跨对话连续性 · 情绪不可预测性 · 真实社交模拟</p>
 </footer>
 
 <script>
-// Tab switching
 function switchTab(e, tabId) {
   const parent = e.target.closest('section') || document;
   parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -2294,21 +2745,15 @@ function switchTab(e, tabId) {
   document.getElementById(tabId).classList.add('active');
 }
 document.querySelectorAll('.scenario').forEach(item => {
-    item.style.cursor = 'pointer'; // 确保鼠标悬停显示手型
+    item.style.cursor = 'pointer';
     item.addEventListener('click', function(e) {
-        // 切换 open 类
         this.classList.toggle('open');
-        
-        // 可选：点击一个时关闭其他已展开的项（手风琴效果）
         document.querySelectorAll('.scenario').forEach(other => {
             if (other !== this) other.classList.remove('open');
         });
     });
 });
 
-
-
-// Nav highlighting
 const sections = document.querySelectorAll('section');
 const navLinks = document.querySelectorAll('nav a');
 window.addEventListener('scroll', () => {
@@ -2322,40 +2767,58 @@ window.addEventListener('scroll', () => {
   });
 });
 
-// Module info panel
 const modData = {
   orchestrator: {
     title: "🎭 Orchestrator 中枢协调器",
-    desc: "整个系统的大脑。接收外部消息后，协调关系查询、记忆检索、情绪评估、群聊决策、表达生成等所有流程。同时管理5个后台循环任务。",
+    desc: "整个系统的大脑。接收外部消息后，协调关系查询、记忆检索、情绪评估、群聊决策、表达生成等所有流程。同时管理6个后台循环任务（v2.1新增 inner_state_loop）。",
     connections: [
       "↔ RelationshipManager：查询/更新关系",
       "↔ MemoryHub：读写记忆",
       "↔ EmotionEngine：获取情绪状态",
       "↔ LifeSimulator：获取生活状态",
+      "↔ InnerStateManager：管理内心状态循环 ★",
       "→ ExpressionSynthesizer：生成回复",
       "→ GroupBehaviorEngine：群聊决策",
       "↔ ChatContextManager：管理对话流",
       "← Bot/API：接收外部消息",
+      "→ emit proactive.follow_up_fired ★",
     ]
   },
   life: {
     title: "🌙 LifeSimulator 生活模拟",
-    desc: "模拟24小时日常生活循环。包括作息（几点起床/睡觉）、位置（家/公司/通勤）、体力（体力值影响回复速度）、饥饿度等。她不会在凌晨3点精神满满地秒回你。",
+    desc: "模拟24小时日常生活循环。包括作息（几点起床/睡觉）、位置（家/公司/通勤）、体力（体力值影响回复速度）、饥饿度等。v2.1: 在起床/入睡时 emit life.woke_up / life.sleeping 事件。",
     connections: [
       "→ Orchestrator：提供当前状态",
       "→ Expression：影响回复内容（'我在上班'）",
       "→ ProactiveEngine：影响主动消息时机",
+      "→ InnerStateManager：life.woke_up 触发情绪初始化 ★",
+      "→ InnerStateManager：life.sleeping 触发valence快照 ★",
       "← EventBus：接收时间触发事件",
     ]
   },
   emotion: {
     title: "💛 EmotionEngine 情绪引擎",
-    desc: "PAD情绪模型：Pleasure(愉悦度)、Arousal(激活度)、Dominance(支配度)。加上依恋系统（长时间不联系会想念）。情绪有自然衰减，会被用户消息、浏览内容、生活事件影响。",
+    desc: "PAD情绪模型：Pleasure(愉悦度)、Arousal(激活度)、Dominance(支配度)。加上依恋系统。v2.1: 新增 daily_baseline 字段和 set_daily_baseline() 接口，passive_decay() 改为衰减到基线而非零。",
     connections: [
       "→ Expression：决定语气/回复速度/emoji频率",
       "→ GroupBehavior：影响群聊参与概率",
       "→ ProactiveEngine：情绪触发主动消息",
+      "← InnerStateManager：set_daily_baseline() ★",
       "← EventBus：接收各类情绪刺激",
+    ]
+  },
+  innerstate: {
+    title: "💭 InnerStateManager 内心状态 ★ v2.1",
+    desc: "她的「潜意识层」。每隔2~3小时生成内心独白快照（InnerMonologue），维护「脑子里挂着的事」（PendingThought），在起床时用昨天的状态计算今天的情绪基线。让她有跨对话连续性和不可预测的情绪底色。持久化到 data/inner_state.json。",
+    connections: [
+      "→ EmotionEngine：set_daily_baseline() 起床时调用",
+      "→ Expression：提供 current_monologue 注入 prompt",
+      "→ ProactiveEngine：提供 follow_up 触发器",
+      "← MemoryHub：订阅 memory.consolidated 获取对话摘要",
+      "← LifeSimulator：订阅 life.woke_up / life.sleeping",
+      "← Orchestrator：订阅 proactive.follow_up_fired",
+      "→ EventBus：emit inner_state.updated",
+      "→ 磁盘：data/inner_state.json",
     ]
   },
   relationship: {
@@ -2371,10 +2834,11 @@ const modData = {
   },
   memory: {
     title: "🧠 MemoryHub 记忆中枢",
-    desc: "三层记忆架构：情节记忆（发生了什么事）、语义记忆（客观事实）、情感印记（感受）。所有记忆带隐私标记（private/public）。支持自然遗忘和记忆扭曲。使用ChromaDB向量数据库。",
+    desc: "三层记忆架构：情节记忆、语义记忆、情感印记。所有记忆带隐私标记（private/public）。支持自然遗忘和记忆扭曲。使用ChromaDB向量数据库。v2.1: consolidate() 完成后 emit memory.consolidated 事件。",
     connections: [
       "↔ Orchestrator：读写",
       "→ Expression：提供记忆上下文",
+      "→ InnerStateManager：emit memory.consolidated ★",
       "← ChatContextManager：对话结束时整合",
       "→ LLM：记忆提取和整合",
     ]
@@ -2401,13 +2865,14 @@ const modData = {
   },
   expression: {
     title: "✍️ ExpressionSynthesizer 表达合成",
-    desc: "系统的最终输出层。综合所有上下文（情绪、关系、记忆、生活状态、浏览内容）构建prompt，调用LLM生成回复。然后后处理：分段、延迟计算、注入错别字、选择表情包。群聊模式下自动克制。",
+    desc: "系统的最终输出层。综合所有上下文构建prompt，调用LLM生成回复，然后后处理。v2.1: prompt 中新增「你心里在转的」区块，注入 InnerStateManager 的当前独白。",
     connections: [
       "← Orchestrator：触发生成",
       "← EmotionEngine：情绪风格",
       "← RelationshipManager：关系上下文",
       "← MemoryHub：相关记忆",
       "← LifeSimulator：生活状态",
+      "← InnerStateManager：当前独白 ★",
       "← BrowserAgent：浏览内容",
       "← StickerEngine：表情包选择",
       "→ LLM：prompt → 回复",
@@ -2415,7 +2880,7 @@ const modData = {
   },
   browser: {
     title: "📱 BrowserAgent 浏览代理",
-    desc: "模拟刷手机行为。定时抓取RSS源、热搜等内容。根据persona的兴趣过滤和评价内容。浏览到的东西可能在聊天中自然提起（但不会强行安利）。也会影响情绪。",
+    desc: "模拟刷手机行为。定时抓取RSS源、热搜等内容。根据persona的兴趣过滤和评价内容。浏览到的东西可能在聊天中自然提起。也会影响情绪。",
     connections: [
       "→ EventBus：浏览内容影响情绪",
       "→ Expression：提供聊天素材",
@@ -2425,7 +2890,7 @@ const modData = {
   },
   sticker: {
     title: "😸 StickerEngine 表情包引擎",
-    desc: "管理表情包库。每个表情包有mood、tags、使用次数等属性。根据当前情绪和对话内容选择最合适的表情包。是她人格化表达的重要组成部分。",
+    desc: "管理表情包库。每个表情包有mood、tags、使用次数等属性。根据当前情绪和对话内容选择最合适的表情包。",
     connections: [
       "← Expression：请求选择表情包",
       "← EmotionEngine：当前情绪",
@@ -2434,20 +2899,25 @@ const modData = {
   },
   proactive: {
     title: "💬 ProactiveEngine 主动消息引擎",
-    desc: "评估是否应该主动发消息。触发条件：看到有趣内容想分享、依恋度高且久未联系、到了特定时间点（早安/晚安）、情绪需要倾诉等。",
+    desc: "评估是否应该主动发消息。触发条件包括内容分享、想念、定时问候、情绪倾诉。v2.1: 新增 follow_up 触发类型，由 InnerStateManager 的 PendingThought 驱动。",
     connections: [
       "← EmotionEngine：情绪触发",
       "← LifeSimulator：时间触发",
       "← BrowserAgent：内容分享触发",
+      "← InnerStateManager：follow_up 触发 ★",
       "← RelationshipManager：选择发送目标",
       "→ Expression：生成主动消息",
     ]
   },
   eventbus: {
     title: "🔌 EventBus 事件总线",
-    desc: "发布/订阅模式的事件分发中心。所有模块间的异步通信都通过EventBus。事件类型包括：user.message、emotion.change、life.tick、browse.found 等。解耦模块依赖。",
+    desc: "发布/订阅模式的事件分发中心。v2.1 新增事件类型：life.woke_up、life.sleeping、inner_state.updated、proactive.follow_up_fired、memory.consolidated。",
     connections: [
       "↔ 所有模块：发布和订阅事件",
+      "★ 新事件：life.woke_up / life.sleeping",
+      "★ 新事件：inner_state.updated",
+      "★ 新事件：proactive.follow_up_fired",
+      "★ 新事件：memory.consolidated",
     ]
   },
 };
@@ -2462,6 +2932,9 @@ function showModInfo(modId) {
   data.connections.forEach(c => {
     const div = document.createElement('div');
     div.className = 'conn-item';
+    if (c.includes('★')) {
+      div.style.color = '#fc5c8c';
+    }
     div.textContent = c;
     connEl.appendChild(div);
   });
@@ -2472,7 +2945,6 @@ function closeModInfo() {
   document.getElementById('modInfoPanel').classList.remove('show');
 }
 
-// SVG module hover
 document.querySelectorAll('.mod').forEach(el => {
   el.style.cursor = 'pointer';
   el.addEventListener('mouseenter', () => {
@@ -2488,7 +2960,6 @@ document.querySelectorAll('.mod').forEach(el => {
   });
 });
 
-// Theme switching
 function setTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   document.querySelectorAll('.theme-btn').forEach(b => {
@@ -2502,18 +2973,15 @@ function setTheme(theme) {
   setTheme(saved || 'aurora');
 })();
 
-// Click outside to close panel
 document.addEventListener('click', (e) => {
   const panel = document.getElementById('modInfoPanel');
   if (panel.classList.contains('show') && !panel.contains(e.target)) {
-    // Don't close if clicking on SVG modules
     if (!e.target.closest('.mod')) {
       closeModInfo();
     }
   }
 });
 
-// Smooth scroll
 document.querySelectorAll('nav a').forEach(a => {
   a.addEventListener('click', e => {
     e.preventDefault();
@@ -2522,7 +2990,6 @@ document.querySelectorAll('nav a').forEach(a => {
   });
 });
 
-// Animate stat bars on scroll
 const observer = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
     if (entry.isIntersecting) {
@@ -2535,10 +3002,19 @@ const observer = new IntersectionObserver((entries) => {
           });
         });
       });
+      entry.target.querySelectorAll('.mood-day-fill').forEach(bar => {
+        const w = bar.style.width;
+        bar.style.width = '0%';
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            bar.style.width = w;
+          });
+        });
+      });
     }
   });
 }, {threshold: 0.3});
-document.querySelectorAll('.rel-card, .card-grid').forEach(el => observer.observe(el));
+document.querySelectorAll('.rel-card, .card-grid, .inner-pillar-grid, [id="innerstate"]').forEach(el => observer.observe(el));
 </script>
 
 </body>

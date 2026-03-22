@@ -1400,7 +1400,7 @@ from unittest.mock import MagicMock, AsyncMock, patch
 def make_orchestrator(tmp_path):
     import yaml
     from orchestrator import Orchestrator
-    cfg = yaml.safe_load(open("/Users/admin/Work/virtual-persona/config.yaml"))
+    cfg = yaml.safe_load(open("/Users/admin/Work/virtual-persona/config.local.yaml"))
     cfg["llm"]["expression"]["api_key"] = "test"
     cfg["llm"]["utility"]["api_key"] = "test"
     with patch("memory_hub.MemoryHub.__init__", lambda self, *a, **kw: None), \
