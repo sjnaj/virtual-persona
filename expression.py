@@ -13,6 +13,20 @@ from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
+def _build_user_content_line(user_message, proactive_context, media):
+    if user_message is not None:
+        if media:
+            labels = "、".join(m["label"] for m in media)
+            media_note = f"（附带了 {labels}）"
+        else:
+            media_note = ""
+        if user_message:
+            return f'"{user_message}"{media_note}'
+        else:
+            return f"（{media_note.strip('（）')}，无文字）" if media_note else '""'
+    return proactive_context
+
+
 _MBTI_DESCRIPTIONS = {
     "ENFP": "热情开放、充满好奇心、喜欢分享、容易被新事物吸引",
     "INFP": "理想主义、善解人意、内敛但情感深厚",
@@ -43,6 +57,7 @@ class ExpressionSynthesizer:
         chat_id: int,
         chat_type: str = "private",
         reply_mode: str = "direct",
+        media: list = None,
     ) -> List[dict]:
         return await self._compose(
             user_message=user_message,
@@ -50,6 +65,7 @@ class ExpressionSynthesizer:
             chat_id=chat_id,
             chat_type=chat_type,
             reply_mode=reply_mode,
+            media=media,
         )
 
     async def compose_proactive(self, trigger: dict, chat_id: int,
@@ -69,6 +85,7 @@ class ExpressionSynthesizer:
         chat_id: int = 0,
         chat_type: str = "private",
         reply_mode: str = "direct",
+        media: list = None,
     ) -> List[dict]:
         now = datetime.now()
         is_group = chat_type in ("group", "supergroup")
@@ -88,7 +105,7 @@ class ExpressionSynthesizer:
             group_social_map = self.rel.get_group_social_map(window.group_members)
 
         # ---- 记忆检索 ----
-        query = user_message or proactive_trigger.get("content", "")
+        query = user_message or (proactive_trigger.get("content", "") if proactive_trigger else "")
         memory_context = "group" if is_group else "private"
         memories = await self.memory.recall(
             query, current_chat_context=memory_context
@@ -235,7 +252,7 @@ class ExpressionSynthesizer:
 {browsing_text}
 
 ## {'对方发来' if user_message else '你想主动说'}
-{'"' + user_message + '"' if user_message else proactive_context}
+{_build_user_content_line(user_message, proactive_context, media)}
 
 ## 输出要求
 1. 用 ||| 分隔多条消息
@@ -252,10 +269,13 @@ class ExpressionSynthesizer:
             f"直接以她的身份说话，不要有任何AI痕迹。"
         )
 
-        raw = await self.llm.call(
-            prompt, tier="expression",
+        raw = await self.llm.call_vision(
+            prompt,
+            images=media or [],
+            tier="expression",
             system_prompt=system_prompt,
             temperature=0.85,
+            max_tokens=2000,
         )
 
         if not raw:

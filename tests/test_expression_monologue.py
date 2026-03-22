@@ -10,7 +10,7 @@ def make_expression(monologue_text: str = ""):
         "speaking_style": "随意",
     }
     llm = MagicMock()
-    llm.call = AsyncMock(return_value="测试回复")
+    llm.call_vision = AsyncMock(return_value="测试回复")
     memory = MagicMock()
     memory.recall = AsyncMock(return_value={
         "certain": [], "vague": [], "feelings": [], "private_hints": []
@@ -51,7 +51,7 @@ def test_monologue_injected_into_prompt():
     asyncio.run(synth.compose_reply(
         user_message="你好", user_id=1, chat_id=1
     ))
-    prompt_arg = llm.call.call_args[0][0]
+    prompt_arg = llm.call_vision.call_args[0][0]
     assert "你心里在转的" in prompt_arg
     assert "有点想回家，工作太烦了" in prompt_arg
 
@@ -61,7 +61,7 @@ def test_no_monologue_section_when_empty():
     asyncio.run(synth.compose_reply(
         user_message="你好", user_id=1, chat_id=1
     ))
-    prompt_arg = llm.call.call_args[0][0]
+    prompt_arg = llm.call_vision.call_args[0][0]
     assert "你心里在转的" not in prompt_arg
 
 
@@ -71,7 +71,7 @@ def test_no_monologue_section_when_inner_state_none():
         "name": "测试", "background": "测试背景", "speaking_style": "随意",
     }
     llm = MagicMock()
-    llm.call = AsyncMock(return_value="回复")
+    llm.call_vision = AsyncMock(return_value="回复")
     memory = MagicMock()
     memory.recall = AsyncMock(return_value={
         "certain": [], "vague": [], "feelings": [], "private_hints": []
@@ -101,5 +101,5 @@ def test_no_monologue_section_when_inner_state_none():
         inner_state=None,
     )
     asyncio.run(synth.compose_reply(user_message="你好", user_id=1, chat_id=1))
-    prompt_arg = llm.call.call_args[0][0]
+    prompt_arg = llm.call_vision.call_args[0][0]
     assert "你心里在转的" not in prompt_arg

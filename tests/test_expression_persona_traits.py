@@ -14,7 +14,7 @@ def make_expression_with_traits():
         "interests": ["猫", "穿搭", "甜品"],
     }
     llm = MagicMock()
-    llm.call = AsyncMock(return_value="回复")
+    llm.call_vision = AsyncMock(return_value="回复")
     memory = MagicMock()
     memory.recall = AsyncMock(return_value={
         "certain": [], "vague": [], "feelings": [], "private_hints": []
@@ -49,28 +49,28 @@ def make_expression_with_traits():
 def test_trait_section_heading_in_prompt():
     synth, llm = make_expression_with_traits()
     asyncio.run(synth.compose_reply(user_message="你好", user_id=1, chat_id=1))
-    prompt = llm.call.call_args[0][0]
+    prompt = llm.call_vision.call_args[0][0]
     assert "你的特质" in prompt
 
 
 def test_age_in_prompt():
     synth, llm = make_expression_with_traits()
     asyncio.run(synth.compose_reply(user_message="你好", user_id=1, chat_id=1))
-    prompt = llm.call.call_args[0][0]
+    prompt = llm.call_vision.call_args[0][0]
     assert "24岁" in prompt
 
 
 def test_mbti_in_prompt():
     synth, llm = make_expression_with_traits()
     asyncio.run(synth.compose_reply(user_message="你好", user_id=1, chat_id=1))
-    prompt = llm.call.call_args[0][0]
+    prompt = llm.call_vision.call_args[0][0]
     assert "ENFP" in prompt
 
 
 def test_mbti_description_in_prompt():
     synth, llm = make_expression_with_traits()
     asyncio.run(synth.compose_reply(user_message="你好", user_id=1, chat_id=1))
-    prompt = llm.call.call_args[0][0]
+    prompt = llm.call_vision.call_args[0][0]
     # ENFP should include its full Chinese description string
     assert "热情开放、充满好奇心" in prompt
 
@@ -78,7 +78,7 @@ def test_mbti_description_in_prompt():
 def test_interests_in_prompt():
     synth, llm = make_expression_with_traits()
     asyncio.run(synth.compose_reply(user_message="你好", user_id=1, chat_id=1))
-    prompt = llm.call.call_args[0][0]
+    prompt = llm.call_vision.call_args[0][0]
     assert "穿搭" in prompt
     assert "甜品" in prompt
 
@@ -86,7 +86,7 @@ def test_interests_in_prompt():
 def test_trait_section_appears_between_background_and_current_state():
     synth, llm = make_expression_with_traits()
     asyncio.run(synth.compose_reply(user_message="你好", user_id=1, chat_id=1))
-    prompt = llm.call.call_args[0][0]
+    prompt = llm.call_vision.call_args[0][0]
     # 你的特质 must come after 你是谁 and before 此刻状态
     idx_who = prompt.find("你是谁")
     idx_traits = prompt.find("你的特质")
@@ -102,7 +102,7 @@ def test_missing_traits_graceful():
         # no age, mbti, interests
     }
     llm = MagicMock()
-    llm.call = AsyncMock(return_value="回复")
+    llm.call_vision = AsyncMock(return_value="回复")
     memory = MagicMock()
     memory.recall = AsyncMock(return_value={
         "certain": [], "vague": [], "feelings": [], "private_hints": []
@@ -133,7 +133,7 @@ def test_missing_traits_graceful():
     )
     # Should not raise
     asyncio.run(synth.compose_reply(user_message="你好", user_id=1, chat_id=1))
-    prompt = llm.call.call_args[0][0]
+    prompt = llm.call_vision.call_args[0][0]
     assert "年龄：岁" not in prompt       # no broken empty age label
     assert "MBTI：\n" not in prompt       # no empty MBTI line
     assert "## 你的特质" not in prompt    # entire section suppressed when all fields absent
