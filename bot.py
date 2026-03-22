@@ -97,14 +97,60 @@ class VirtualPersonaBot:
                         pass
         return None
 
+    async def _extract_tgs_frame(self, tgs_bytes: bytes) -> bytes | None:
+        """Extract the first frame from a .tgs (gzip Lottie JSON) sticker as PNG bytes.
+        Requires python-lottie and pycairo. Returns None if unavailable or on error."""
+        import os, tempfile
+        try:
+            from lottie import parsers, exporters
+        except ImportError:
+            logger.warning("[Bot] python-lottie 未安装，无法处理 .tgs 贴纸")
+            return None
+
+        input_path = None
+        output_path = None
+        try:
+            with tempfile.NamedTemporaryFile(suffix=".tgs", delete=False) as f:
+                f.write(tgs_bytes)
+                input_path = f.name
+            output_path = input_path + "_frame.png"
+
+            def _render():
+                animation = parsers.tgs.parse_tgs(input_path)
+                exporters.png.export_png(animation, output_path, frame=0)
+
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(None, _render)
+
+            if os.path.exists(output_path):
+                with open(output_path, "rb") as f:
+                    return f.read()
+            logger.warning("[Bot] TGS 渲染完成但输出文件不存在")
+        except Exception as e:
+            logger.warning(f"[Bot] TGS 帧提取失败: {e}")
+        finally:
+            for p in (input_path, output_path):
+                if p:
+                    try:
+                        os.unlink(p)
+                    except OSError:
+                        pass
+        return None
+
     async def _download_and_encode(self, bot, file_id: str, label: str,
-                                    extract_frame: bool = False) -> dict | None:
+                                    extract_frame: bool = False,
+                                    extract_tgs: bool = False) -> dict | None:
         """Download a Telegram file and return a base64 media dict.
         If extract_frame=True, run ffmpeg to get the first video frame as JPEG.
         Returns None on error."""
         try:
             tg_file = await bot.get_file(file_id)
             data = bytes(await tg_file.download_as_bytearray())
+            if extract_tgs:
+                frame = await self._extract_tgs_frame(data)
+                if frame is None:
+                    return None
+                return {"mime_type": "image/png", "base64": base64.b64encode(frame).decode(), "label": label}
             if extract_frame:
                 frame = await self._extract_first_frame(data)
                 if frame is None:
@@ -151,6 +197,7 @@ class VirtualPersonaBot:
         file_id = None
         label = "photo"
         extract_frame = False
+        extract_tgs = False
         if update.message.photo:
             file_id = update.message.photo[-1].file_id
             label = "photo"
@@ -160,7 +207,11 @@ class VirtualPersonaBot:
                 file_id = sticker.file_id
                 label = "sticker"
                 extract_frame = True
-            elif not sticker.is_animated:
+            elif sticker.is_animated:
+                file_id = sticker.file_id
+                label = "sticker"
+                extract_tgs = True
+            else:
                 file_id = sticker.file_id
                 label = "sticker"
         elif update.message.animation:
@@ -171,7 +222,8 @@ class VirtualPersonaBot:
         media = None
         if file_id:
             enc = await self._download_and_encode(context.bot, file_id, label,
-                                                   extract_frame=extract_frame)
+                                                   extract_frame=extract_frame,
+                                                   extract_tgs=extract_tgs)
             if enc:
                 media = [enc]
 
@@ -211,7 +263,7 @@ class VirtualPersonaBot:
     async def _handle_decline_media_message(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ):
-        """Handle video, video_note, animated sticker (.tgs/Lottie) — decline politely."""
+        """Handle video and video_note — decline politely."""
         if not update.message or not update.effective_user:
             return
 
@@ -671,16 +723,15 @@ class VirtualPersonaBot:
             self._handle_message,
         ))
 
-        # 图片 + 静态/动态表情包 + 动图 → 视觉理解（动图/video sticker 截取第一帧）
+        # 图片 + 静态/video/animated 表情包 + 动图 → 视觉理解（动图/video sticker 截取第一帧，animated tgs 截取第一帧）
         app.add_handler(MessageHandler(
             (filters.PHOTO | filters.Sticker.STATIC | filters.Sticker.VIDEO
-             | filters.ANIMATION) & ~filters.COMMAND,
+             | filters.Sticker.ANIMATED | filters.ANIMATION) & ~filters.COMMAND,
             self._handle_media_message,
         ))
-        # 普通视频 / 圆形视频 / .tgs 动态贴纸（Lottie，无法提取帧）→ 礼貌拒绝
+        # 普通视频 / 圆形视频 → 礼貌拒绝
         app.add_handler(MessageHandler(
-            (filters.VIDEO | filters.VIDEO_NOTE
-             | filters.Sticker.ANIMATED) & ~filters.COMMAND,
+            (filters.VIDEO | filters.VIDEO_NOTE) & ~filters.COMMAND,
             self._handle_decline_media_message,
         ))
 
