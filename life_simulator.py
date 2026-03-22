@@ -361,6 +361,8 @@ notable=true表示这件事她可能想跟朋友说。shareable_thought是她想
         ws = dp.get("work_start", [9, 10])
         we = dp.get("work_end", [18, 19])
         ln = dp.get("lunch", [11, 13])
+        if len(ws) < 2 or len(we) < 2 or len(ln) < 2:
+            return base_hint
         schedule = (
             f"（上班时间约{ws[0]}-{ws[1]}点，"
             f"午饭约{ln[0]}-{ln[1]}点，"
