@@ -2,12 +2,17 @@
 生活模拟器 —— 不是预设日程，而是状态驱动的决策
 每个 tick 根据当前状态让 AI 决定"她在做什么"
 """
+import json
 import math
 import random
 import logging
+import dataclasses
+import httpx
 from datetime import datetime
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Optional, List
+from collections import Counter
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +29,12 @@ class PhysicalState:
         self.hunger = max(0, min(100, self.hunger))
         self.comfort = max(0, min(100, self.comfort))
         self.sleep_debt = max(0, min(100, self.sleep_debt))
+
+
+@dataclass
+class YearGaoState:
+    location: str = "沙发"   # 沙发/床上/窗台/猫窝/厨房/消失了
+    mood: str = "发呆"        # 赖床/玩耍/讨食/发呆/黏人/暴走
 
 
 @dataclass
@@ -53,6 +64,9 @@ class LifeSimulator:
 
         self.event_log: List[LifeEvent] = []
         self.today_summary: List[str] = []
+
+        self.yearago: YearGaoState = YearGaoState()
+        self._yearago_ticks_since_change: int = 0
 
     async def tick(self):
         now = datetime.now()
@@ -185,6 +199,56 @@ notable=true表示这件事她可能想跟朋友说。shareable_thought是她想
             self.physical.hunger += random.uniform(0.5, 1)
             self.physical.sleep_debt = max(0, self.physical.sleep_debt - 2)
         self.physical.clamp()
+
+    # ── 年糕状态 ──────────────────────────────────────────────────────────────
+
+    _YEARAGO_MOODS_BY_HOUR = [
+        # (start, end, [(mood, weight), ...])  start inclusive, end exclusive, 0–23
+        (0,  6,  [("发呆", 5), ("消失了", 4), ("玩耍", 1)]),
+        (6,  8,  [("讨食", 6), ("黏人", 3), ("发呆", 1)]),
+        (8,  17, [("赖床", 5), ("发呆", 4), ("玩耍", 1)]),
+        (17, 19, [("讨食", 6), ("玩耍", 3), ("黏人", 1)]),
+        (19, 23, [("玩耍", 4), ("暴走", 3), ("黏人", 2), ("发呆", 1)]),
+        (23, 24, [("发呆", 5), ("消失了", 4), ("玩耍", 1)]),
+    ]
+
+    _YEARAGO_LOCATION_BY_MOOD = {
+        "讨食":   "厨房",
+        "赖床":   None,
+        "发呆":   None,
+        "玩耍":   None,
+        "黏人":   None,
+        "暴走":   "消失了",
+        "消失了": "消失了",
+    }
+
+    _YEARAGO_INDOOR_LOCATIONS = ["沙发", "床上", "窗台", "猫窝"]
+
+    def _update_yearago(self, hour: float) -> None:
+        """每次 tick 更新猫咪状态（纯规则，无 LLM）"""
+        self._yearago_ticks_since_change += 1
+        if self._yearago_ticks_since_change < 2:
+            return
+        if random.random() >= 0.35:
+            return
+
+        moods, weights = [], []
+        h = int(hour) % 24
+        for start, end, pool in self._YEARAGO_MOODS_BY_HOUR:
+            if start <= h < end:
+                for mood, w in pool:
+                    moods.append(mood)
+                    weights.append(w)
+                break
+        if not moods:
+            moods, weights = ["发呆"], [1]
+
+        new_mood = random.choices(moods, weights=weights)[0]
+        fixed_loc = self._YEARAGO_LOCATION_BY_MOOD.get(new_mood)
+        new_loc = fixed_loc if fixed_loc else random.choice(self._YEARAGO_INDOOR_LOCATIONS)
+
+        self.yearago = YearGaoState(location=new_loc, mood=new_mood)
+        self._yearago_ticks_since_change = 0
 
     def get_status(self) -> dict:
         return {
