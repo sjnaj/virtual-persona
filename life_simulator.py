@@ -140,6 +140,8 @@ class LifeSimulator:
         if self.yearago.mood in ("讨食", "暴走"):
             yearago_notable = "\n（年糕现在比较闹腾，相关的事情比平时更值得分享）"
 
+        interests_str = "、".join(self.persona.get("interests", []))
+
         prompt = f"""你是"{self.persona['name']}"的生活模拟器。现在是 {now.strftime("%Y-%m-%d %H:%M")} ({'工作日' if is_weekday else '周末'})。
 
 当前状态：
@@ -153,6 +155,7 @@ class LifeSimulator:
 最近几个动作：{recent_actions}
 
 她的职业：{self.persona.get('occupation', '')}
+她的兴趣爱好：{interests_str}
 她的性格：外向{self.persona['personality']['extraversion']:.1f} 自律{self.persona['personality']['conscientiousness']:.1f}
 
 基于以上信息，她接下来15分钟最可能做什么？

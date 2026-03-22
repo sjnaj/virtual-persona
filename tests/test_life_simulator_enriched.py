@@ -552,3 +552,63 @@ def test_get_status_includes_weather_and_yearago():
     assert "yearago" in status
     assert status["yearago"]["location"] == "窗台"
     assert status["yearago"]["mood"] == "发呆"
+
+
+# ── Task: interests in tick prompt ──────────────────────────────────────────
+
+def _make_tick_sim_with_interests():
+    from life_simulator import LifeSimulator
+    from event_bus import EventBus
+    from unittest.mock import patch
+    bus = EventBus()
+    persona = {
+        "name": "测试",
+        "occupation": "设计师",
+        "personality": {"extraversion": 0.7, "conscientiousness": 0.5},
+        "daily_patterns": {
+            "wake_up": [7, 8], "sleep": [23, 25],
+            "work_start": [9, 10], "work_end": [18, 19], "lunch": [11, 13],
+        },
+        "interests": ["猫", "穿搭", "甜品"],
+    }
+    llm = MagicMock()
+    llm.call_json = AsyncMock(return_value=None)
+    with patch.object(LifeSimulator, '_load_state', lambda self: None):
+        sim = LifeSimulator(persona, llm, bus)
+    sim.is_sleeping = False
+    sim.woke_up_today = True
+    sim.physical.energy = 60.0
+    sim.daily_weather = {
+        "condition": "晴", "temp": 25,
+        "date": datetime.now().date().isoformat(),
+    }
+    default_result = {
+        "action": "做设计", "location": "公司", "detail": "改稿",
+        "mood_impact": 0, "energy_change": -2, "notable": False,
+        "shareable_thought": None,
+    }
+    sim.llm.call_json = AsyncMock(return_value=default_result)
+    return sim
+
+
+def test_tick_prompt_contains_interests():
+    sim = _make_tick_sim_with_interests()
+    captured = []
+    original = sim.llm.call_json
+    async def capture(prompt, **kwargs):
+        captured.append(prompt)
+        return await original(prompt, **kwargs)
+    sim.llm.call_json = capture
+
+    async def run():
+        with patch("life_simulator.datetime") as mock_dt:
+            mock_dt.now.return_value = datetime(2026, 3, 22, 15, 0)
+            await sim.tick()
+    asyncio.run(run())
+
+    assert captured, "call_json never called"
+    prompt = captured[0]
+    assert "她的兴趣爱好" in prompt
+    # Use "穿搭" (not "猫" — "猫" appears in yearago_str regardless of this change)
+    assert "穿搭" in prompt
+    assert "甜品" in prompt
