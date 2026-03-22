@@ -94,8 +94,8 @@ def test_trait_section_appears_between_background_and_current_state():
     assert idx_who < idx_traits < idx_state
 
 
-def test_missing_traits_graceful(monkeypatch):
-    """Persona without age/mbti/interests should not raise."""
+def test_missing_traits_graceful():
+    """Persona without age/mbti/interests should not raise and must not emit broken labels."""
     from expression import ExpressionSynthesizer
     persona = {
         "name": "测试", "background": "背景", "speaking_style": "随意",
@@ -133,3 +133,7 @@ def test_missing_traits_graceful(monkeypatch):
     )
     # Should not raise
     asyncio.run(synth.compose_reply(user_message="你好", user_id=1, chat_id=1))
+    prompt = llm.call.call_args[0][0]
+    assert "年龄：岁" not in prompt       # no broken empty age label
+    assert "MBTI：\n" not in prompt       # no empty MBTI line
+    assert "## 你的特质" not in prompt    # entire section suppressed when all fields absent
