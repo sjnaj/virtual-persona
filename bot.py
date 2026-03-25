@@ -52,6 +52,11 @@ class VirtualPersonaBot:
 
         self.app: Application = None
 
+        # Per-chat message queues and workers for serialized processing
+        self._chat_queues: dict = {}
+        self._chat_workers: dict = {}
+        self._bot = None  # set in _post_init
+
     def _is_allowed(self, user_id: int, chat_id: int, chat_type: str) -> bool:
         """权限检查"""
         if user_id == self.admin_user_id:
@@ -60,6 +65,145 @@ class VirtualPersonaBot:
             return not self.allowed_users or user_id in self.allowed_users
         else:
             return not self.allowed_groups or chat_id in self.allowed_groups
+
+    def _enqueue_message(self, chat_id: int, message_data: dict) -> None:
+        """Enqueue a message for per-chat serial processing and start a worker if needed."""
+        if chat_id not in self._chat_queues:
+            self._chat_queues[chat_id] = asyncio.Queue()
+        self._chat_queues[chat_id].put_nowait(message_data)
+
+        # Check-and-create is synchronous — no await between check and create —
+        # to prevent a race where two concurrent handlers both see a done task.
+        existing = self._chat_workers.get(chat_id)
+        if existing is None or existing.done():
+            task = asyncio.create_task(self._chat_worker(chat_id))
+            self._chat_workers[chat_id] = task
+
+    async def _chat_worker(self, chat_id: int) -> None:
+        """
+        Per-chat worker: drains the queue, generates a reply, checks for new
+        messages before sending, regenerates once if needed, then sends.
+        """
+        queue = self._chat_queues[chat_id]
+        try:
+            while not queue.empty():
+                # Step 1: dequeue first message
+                first = queue.get_nowait()
+                batch = [first]
+
+                # Step 2: accumulation window — collect rapid follow-ups
+                acc_ms = self.orch.config.get("system", {}).get("message_accumulation_ms", 500)
+                await asyncio.sleep(acc_ms / 1000)
+
+                # Step 3: drain any messages that arrived during the wait
+                while not queue.empty():
+                    batch.append(queue.get_nowait())
+
+                # Step 4: ingest all messages (update state for each)
+                last_reply_mode = None
+                last_msg = None
+                for msg in batch:
+                    try:
+                        reply_mode = await self.orch.ingest_message(
+                            text=msg["text"],
+                            user_id=msg["user_id"],
+                            user_name=msg["user_name"],
+                            chat_id=chat_id,
+                            chat_type=msg["chat_type"],
+                            group_title=msg["group_title"],
+                            mentioned_me=msg["mentioned_me"],
+                            media=msg.get("media"),
+                        )
+                    except Exception as e:
+                        logger.error(f"[Worker:{chat_id}] ingest error: {e}", exc_info=True)
+                        continue
+                    if reply_mode is not None:
+                        last_reply_mode = reply_mode
+                        last_msg = msg
+
+                # If all messages were group-skips, nothing to generate this cycle
+                if last_reply_mode is None or last_msg is None:
+                    continue
+
+                # Step 5: generate reply (NOT recorded yet)
+                try:
+                    messages = await self.orch._generate_reply(
+                        user_message=last_msg["text"],
+                        user_id=last_msg["user_id"],
+                        chat_id=chat_id,
+                        chat_type=last_msg["chat_type"],
+                        reply_mode=last_reply_mode,
+                        media=last_msg.get("media"),
+                    )
+                except Exception as e:
+                    logger.error(f"[Worker:{chat_id}] generate error: {e}", exc_info=True)
+                    continue
+
+                # Step 6: pre-send staleness check — regenerate at most once
+                if not queue.empty():
+                    regen_batch = []
+                    while not queue.empty():
+                        regen_batch.append(queue.get_nowait())
+
+                    regen_last_mode = None
+                    regen_last_msg = None
+                    for msg in regen_batch:
+                        try:
+                            reply_mode = await self.orch.ingest_message(
+                                text=msg["text"],
+                                user_id=msg["user_id"],
+                                user_name=msg["user_name"],
+                                chat_id=chat_id,
+                                chat_type=msg["chat_type"],
+                                group_title=msg["group_title"],
+                                mentioned_me=msg["mentioned_me"],
+                                media=msg.get("media"),
+                            )
+                        except Exception as e:
+                            logger.error(f"[Worker:{chat_id}] regen ingest error: {e}", exc_info=True)
+                            continue
+                        if reply_mode is not None:
+                            regen_last_mode = reply_mode
+                            regen_last_msg = msg
+
+                    # If all regen-batch messages were group-skips, fall through
+                    # and send the original reply unchanged.
+                    if regen_last_mode is not None and regen_last_msg is not None:
+                        try:
+                            messages = await self.orch._generate_reply(
+                                user_message=regen_last_msg["text"],
+                                user_id=regen_last_msg["user_id"],
+                                chat_id=chat_id,
+                                chat_type=regen_last_msg["chat_type"],
+                                reply_mode=regen_last_mode,
+                                media=regen_last_msg.get("media"),
+                            )
+                            last_msg = regen_last_msg  # for reply_to
+                        except Exception as e:
+                            logger.error(f"[Worker:{chat_id}] regen generate error: {e}", exc_info=True)
+                            # fall through with original messages
+
+                # Step 7: record reply (once, after regen decision is final)
+                try:
+                    await self.orch._record_reply(
+                        messages=messages,
+                        user_id=last_msg["user_id"],
+                        chat_id=chat_id,
+                        chat_type=last_msg["chat_type"],
+                    )
+                except Exception as e:
+                    logger.error(f"[Worker:{chat_id}] record error: {e}", exc_info=True)
+
+                # Step 8: send
+                await self._send_messages(
+                    self._bot, chat_id, messages,
+                    reply_to=last_msg.get("reply_to"),
+                )
+        except Exception as e:
+            logger.error(f"[Worker:{chat_id}] unhandled error: {e}", exc_info=True)
+        finally:
+            # Remove self from workers dict so next enqueue can start a fresh worker
+            self._chat_workers.pop(chat_id, None)
 
     async def _extract_first_frame(self, video_bytes: bytes) -> bytes | None:
         """Extract the first frame from an MP4/WebM file as JPEG bytes using ffmpeg.
@@ -98,43 +242,7 @@ class VirtualPersonaBot:
         return None
 
     async def _extract_tgs_frame(self, tgs_bytes: bytes) -> bytes | None:
-        """Extract the first frame from a .tgs (gzip Lottie JSON) sticker as PNG bytes.
-        Requires python-lottie and pycairo. Returns None if unavailable or on error."""
-        import os, tempfile
-        try:
-            from lottie import parsers, exporters
-        except ImportError:
-            logger.warning("[Bot] python-lottie 未安装，无法处理 .tgs 贴纸")
-            return None
-
-        input_path = None
-        output_path = None
-        try:
-            with tempfile.NamedTemporaryFile(suffix=".tgs", delete=False) as f:
-                f.write(tgs_bytes)
-                input_path = f.name
-            output_path = input_path + "_frame.png"
-
-            def _render():
-                animation = parsers.tgs.parse_tgs(input_path)
-                exporters.png.export_png(animation, output_path, frame=0)
-
-            loop = asyncio.get_event_loop()
-            await loop.run_in_executor(None, _render)
-
-            if os.path.exists(output_path):
-                with open(output_path, "rb") as f:
-                    return f.read()
-            logger.warning("[Bot] TGS 渲染完成但输出文件不存在")
-        except Exception as e:
-            logger.warning(f"[Bot] TGS 帧提取失败: {e}")
-        finally:
-            for p in (input_path, output_path):
-                if p:
-                    try:
-                        os.unlink(p)
-                    except OSError:
-                        pass
+        """TGS 渲染需要 arm64/x86_64 一致的 cairo，当前环境不支持，直接跳过。"""
         return None
 
     async def _download_and_encode(self, bot, file_id: str, label: str,
@@ -144,8 +252,8 @@ class VirtualPersonaBot:
         If extract_frame=True, run ffmpeg to get the first video frame as JPEG.
         Returns None on error."""
         try:
-            tg_file = await bot.get_file(file_id)
-            data = bytes(await tg_file.download_as_bytearray())
+            tg_file = await bot.get_file(file_id, read_timeout=30)
+            data = bytes(await tg_file.download_as_bytearray(read_timeout=60))
             if extract_tgs:
                 frame = await self._extract_tgs_frame(data)
                 if frame is None:
@@ -226,6 +334,9 @@ class VirtualPersonaBot:
                                                    extract_tgs=extract_tgs)
             if enc:
                 media = [enc]
+            elif not caption:
+                # 纯媒体消息下载失败，没有文字可回退，跳过避免 AI 答非所问
+                return
 
         group_title = ""
         if chat_type in ("group", "supergroup"):
@@ -642,6 +753,7 @@ class VirtualPersonaBot:
 
     async def _post_init(self, app: Application):
         self.app = app
+        self._bot = app.bot
         me = await app.bot.get_me()
         self.bot_username = me.username or ""
         self.bot_id = me.id
@@ -692,7 +804,11 @@ class VirtualPersonaBot:
         app = (
             Application.builder()
             .token(self.bot_token)
-            .get_updates_connection_pool_size(4)
+            .connect_timeout(10.0)          # 建立连接超时                                                                                            
+            .read_timeout(10.0)             # 读取响应超时                                                                                            
+            .write_timeout(30.0)            # 发送请求超时                                                                                            
+            .pool_timeout(5.0)              # 从连接池获取连接超时   
+            .get_updates_connection_pool_size(6)
             .get_updates_pool_timeout(10.0)
             .post_init(self._post_init)
             .post_shutdown(self._post_shutdown)
