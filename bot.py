@@ -347,29 +347,24 @@ class VirtualPersonaBot:
             f"caption={caption[:30]!r} | mentioned={mentioned_me}"
         )
 
+        # Register proactive callback (synchronous, before enqueue)
         self.orch.set_proactive_callback(
             chat_id,
-            lambda msgs, _cid=chat_id: self._send_messages(context.bot, _cid, msgs),
+            lambda msgs, _cid=chat_id: self._send_messages(self._bot, _cid, msgs),
         )
 
-        messages = await self.orch.handle_message(
-            text=caption,
-            user_id=user_id,
-            user_name=user_name,
-            chat_id=chat_id,
-            chat_type=chat_type,
-            group_title=group_title,
-            mentioned_me=mentioned_me,
-            media=media,
-        )
-
-        if messages is None:
-            return
-
-        await self._send_messages(
-            context.bot, chat_id, messages,
-            reply_to=update.message.message_id if chat_type != "private" else None,
-        )
+        # Enqueue for per-chat serial processing
+        self._enqueue_message(chat_id, {
+            "text": caption,
+            "user_id": user_id,
+            "user_name": user_name,
+            "chat_id": chat_id,
+            "chat_type": chat_type,
+            "group_title": group_title,
+            "mentioned_me": mentioned_me,
+            "media": media,
+            "reply_to": update.message.message_id if chat_type != "private" else None,
+        })
 
     async def _handle_decline_media_message(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
@@ -453,29 +448,23 @@ class VirtualPersonaBot:
             f"| mentioned={mentioned_me}"
         )
 
-        # 注册主动消息回调
+        # Register proactive callback (synchronous, before enqueue)
         async def send_proactive(messages):
-            await self._send_messages(context.bot, chat_id, messages)
+            await self._send_messages(self._bot, chat_id, messages)
         self.orch.set_proactive_callback(chat_id, send_proactive)
 
-        # 调用协调器
-        messages = await self.orch.handle_message(
-            text=text,
-            user_id=user_id,
-            user_name=user_name,
-            chat_id=chat_id,
-            chat_type=chat_type,
-            group_title=group_title,
-            mentioned_me=mentioned_me,
-        )
-
-        if messages is None:
-            # 群聊中决定不回复
-            return
-
-        # 发送消息
-        await self._send_messages(context.bot, chat_id, messages,
-                                   reply_to=update.message.message_id if chat_type != "private" else None)
+        # Enqueue for per-chat serial processing
+        self._enqueue_message(chat_id, {
+            "text": text,
+            "user_id": user_id,
+            "user_name": user_name,
+            "chat_id": chat_id,
+            "chat_type": chat_type,
+            "group_title": group_title,
+            "mentioned_me": mentioned_me,
+            "media": None,
+            "reply_to": update.message.message_id if chat_type != "private" else None,
+        })
 
     async def _send_messages(self, bot, chat_id: int, messages: list,
                               reply_to: int = None):

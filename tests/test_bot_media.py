@@ -10,7 +10,13 @@ def _make_bot():
     orch.handle_message = AsyncMock(return_value=[
         {"type": "text", "content": "好漂亮～", "delay": 0}
     ])
+    orch.ingest_message = AsyncMock(return_value="direct")
+    orch._generate_reply = AsyncMock(return_value=[
+        {"type": "text", "content": "好漂亮～", "delay": 0}
+    ])
+    orch._record_reply = AsyncMock()
     orch.set_proactive_callback = MagicMock()
+    orch.config = {"system": {}}
     orch.persona = {"name": "林小晴"}
 
     cfg = {
@@ -22,7 +28,18 @@ def _make_bot():
     bot_obj = VirtualPersonaBot(orch, cfg)
     bot_obj.bot_username = "testbot"
     bot_obj.bot_id = 12345
+    bot_obj._bot = MagicMock()
+    bot_obj._bot.send_message = AsyncMock()
+    bot_obj._bot.send_chat_action = AsyncMock()
+    bot_obj._bot.send_sticker = AsyncMock()
     return bot_obj
+
+
+def _capture_enqueue(bot_obj):
+    """Replace _enqueue_message with a spy that captures enqueued messages."""
+    enqueued = []
+    bot_obj._enqueue_message = lambda chat_id, msg: enqueued.append((chat_id, msg))
+    return enqueued
 
 
 def _make_photo_update(user_id=1, chat_id=1, chat_type="private",
@@ -77,12 +94,13 @@ def _make_video_update(user_id=1, chat_id=1, chat_type="private", is_bot=False):
 def test_photo_message_calls_orchestrator_with_media():
     """Photo messages download the file and pass media to orchestrator."""
     bot_obj = _make_bot()
+    enqueued = _capture_enqueue(bot_obj)
     update = _make_photo_update()
 
     fake_bytes = b"\xff\xd8\xff\xe0test_jpeg_bytes"
     expected_b64 = base64.b64encode(fake_bytes).decode()
 
-    async def fake_get_file(file_id):
+    async def fake_get_file(file_id, **kwargs):
         f = MagicMock()
         f.download_as_bytearray = AsyncMock(return_value=bytearray(fake_bytes))
         return f
@@ -94,9 +112,8 @@ def test_photo_message_calls_orchestrator_with_media():
 
     asyncio.run(bot_obj._handle_media_message(update, ctx))
 
-    bot_obj.orch.handle_message.assert_called_once()
-    call_kwargs = bot_obj.orch.handle_message.call_args.kwargs
-    media = call_kwargs.get("media")
+    assert len(enqueued) == 1
+    media = enqueued[0][1]["media"]
     assert media is not None and len(media) == 1
     assert media[0]["mime_type"] == "image/jpeg"
     assert media[0]["base64"] == expected_b64
@@ -106,9 +123,10 @@ def test_photo_message_calls_orchestrator_with_media():
 def test_photo_with_caption_passes_text():
     """Caption text is passed as the `text` argument to orchestrator."""
     bot_obj = _make_bot()
+    enqueued = _capture_enqueue(bot_obj)
     update = _make_photo_update(caption="这是我的猫")
 
-    async def fake_get_file(file_id):
+    async def fake_get_file(file_id, **kwargs):
         f = MagicMock()
         f.download_as_bytearray = AsyncMock(return_value=bytearray(b"\xff\xd8\xff"))
         return f
@@ -120,16 +138,17 @@ def test_photo_with_caption_passes_text():
 
     asyncio.run(bot_obj._handle_media_message(update, ctx))
 
-    call_kwargs = bot_obj.orch.handle_message.call_args.kwargs
-    assert call_kwargs.get("text") == "这是我的猫"
+    assert len(enqueued) == 1
+    assert enqueued[0][1]["text"] == "这是我的猫"
 
 
 def test_photo_download_failure_proceeds_without_media():
     """Download failure calls orchestrator with media=None."""
     bot_obj = _make_bot()
+    enqueued = _capture_enqueue(bot_obj)
     update = _make_photo_update(caption="看")
 
-    async def fake_get_file(file_id):
+    async def fake_get_file(file_id, **kwargs):
         raise Exception("network error")
 
     ctx = MagicMock()
@@ -139,18 +158,19 @@ def test_photo_download_failure_proceeds_without_media():
 
     asyncio.run(bot_obj._handle_media_message(update, ctx))
 
-    call_kwargs = bot_obj.orch.handle_message.call_args.kwargs
-    assert call_kwargs.get("media") is None
+    assert len(enqueued) == 1
+    assert enqueued[0][1]["media"] is None
 
 
 def test_bot_sender_silently_ignored():
     """Messages from bots are silently dropped."""
     bot_obj = _make_bot()
+    enqueued = _capture_enqueue(bot_obj)
     update = _make_photo_update(is_bot=True)
     ctx = MagicMock()
 
     asyncio.run(bot_obj._handle_media_message(update, ctx))
-    bot_obj.orch.handle_message.assert_not_called()
+    assert len(enqueued) == 0
 
 
 def test_video_decline_reply_sent():
@@ -194,9 +214,10 @@ def test_video_decline_suppressed_in_group_when_not_mentioned():
 def test_mentioned_me_detected_from_caption():
     """mentioned_me=True when caption contains @botusername."""
     bot_obj = _make_bot()
+    enqueued = _capture_enqueue(bot_obj)
     update = _make_photo_update(caption="@testbot 看这个")
 
-    async def fake_get_file(file_id):
+    async def fake_get_file(file_id, **kwargs):
         f = MagicMock()
         f.download_as_bytearray = AsyncMock(return_value=bytearray(b"\xff\xd8"))
         return f
@@ -208,8 +229,8 @@ def test_mentioned_me_detected_from_caption():
 
     asyncio.run(bot_obj._handle_media_message(update, ctx))
 
-    call_kwargs = bot_obj.orch.handle_message.call_args.kwargs
-    assert call_kwargs.get("mentioned_me") is True
+    assert len(enqueued) == 1
+    assert enqueued[0][1]["mentioned_me"] is True
 
 
 # ===== Frame extraction tests =====
@@ -239,13 +260,14 @@ def _make_animation_update(caption=None, chat_type="private"):
 def test_animation_calls_extract_frame():
     """Animation messages call _extract_first_frame and send result as jpeg."""
     bot_obj = _make_bot()
+    enqueued = _capture_enqueue(bot_obj)
     update = _make_animation_update()
 
     fake_mp4 = b"\x00\x00\x00\x18ftyp"  # fake MP4 bytes
     fake_jpeg = b"\xff\xd8\xff\xe0extracted_frame"
     expected_b64 = base64.b64encode(fake_jpeg).decode()
 
-    async def fake_get_file(file_id):
+    async def fake_get_file(file_id, **kwargs):
         f = MagicMock()
         f.download_as_bytearray = AsyncMock(return_value=bytearray(fake_mp4))
         return f
@@ -267,9 +289,8 @@ def test_animation_calls_extract_frame():
     finally:
         bot_module.VirtualPersonaBot._extract_first_frame = original
 
-    bot_obj.orch.handle_message.assert_called_once()
-    call_kwargs = bot_obj.orch.handle_message.call_args.kwargs
-    media = call_kwargs.get("media")
+    assert len(enqueued) == 1
+    media = enqueued[0][1]["media"]
     assert media is not None and len(media) == 1
     assert media[0]["mime_type"] == "image/jpeg"
     assert media[0]["base64"] == expected_b64
@@ -278,9 +299,10 @@ def test_animation_calls_extract_frame():
 def test_animation_frame_extraction_failure_proceeds_without_media():
     """If frame extraction fails, orchestrator is called with media=None."""
     bot_obj = _make_bot()
-    update = _make_animation_update()
+    enqueued = _capture_enqueue(bot_obj)
+    update = _make_animation_update(caption="看")
 
-    async def fake_get_file(file_id):
+    async def fake_get_file(file_id, **kwargs):
         f = MagicMock()
         f.download_as_bytearray = AsyncMock(return_value=bytearray(b"\x00"))
         return f
@@ -302,8 +324,8 @@ def test_animation_frame_extraction_failure_proceeds_without_media():
     finally:
         bot_module.VirtualPersonaBot._extract_first_frame = original
 
-    call_kwargs = bot_obj.orch.handle_message.call_args.kwargs
-    assert call_kwargs.get("media") is None
+    assert len(enqueued) == 1
+    assert enqueued[0][1]["media"] is None
 
 
 def test_extract_first_frame_returns_none_when_ffmpeg_missing():
@@ -350,13 +372,14 @@ def _make_animated_sticker_update(caption=None, chat_type="private"):
 def test_animated_sticker_calls_extract_tgs_frame():
     """Animated sticker (.tgs) messages call _extract_tgs_frame and return png."""
     bot_obj = _make_bot()
+    enqueued = _capture_enqueue(bot_obj)
     update = _make_animated_sticker_update()
 
     fake_tgs = b"\x1f\x8b\x08fake_tgs_data"
     fake_png = b"\x89PNG\r\nfirst_frame"
     expected_b64 = base64.b64encode(fake_png).decode()
 
-    async def fake_get_file(file_id):
+    async def fake_get_file(file_id, **kwargs):
         f = MagicMock()
         f.download_as_bytearray = AsyncMock(return_value=bytearray(fake_tgs))
         return f
@@ -378,9 +401,8 @@ def test_animated_sticker_calls_extract_tgs_frame():
     finally:
         bot_module.VirtualPersonaBot._extract_tgs_frame = original
 
-    bot_obj.orch.handle_message.assert_called_once()
-    call_kwargs = bot_obj.orch.handle_message.call_args.kwargs
-    media = call_kwargs.get("media")
+    assert len(enqueued) == 1
+    media = enqueued[0][1]["media"]
     assert media is not None and len(media) == 1
     assert media[0]["mime_type"] == "image/png"
     assert media[0]["base64"] == expected_b64
@@ -390,9 +412,10 @@ def test_animated_sticker_calls_extract_tgs_frame():
 def test_animated_sticker_tgs_failure_proceeds_without_media():
     """If TGS extraction fails, orchestrator is called with media=None."""
     bot_obj = _make_bot()
-    update = _make_animated_sticker_update()
+    enqueued = _capture_enqueue(bot_obj)
+    update = _make_animated_sticker_update(caption="看")
 
-    async def fake_get_file(file_id):
+    async def fake_get_file(file_id, **kwargs):
         f = MagicMock()
         f.download_as_bytearray = AsyncMock(return_value=bytearray(b"\x00"))
         return f
@@ -414,8 +437,8 @@ def test_animated_sticker_tgs_failure_proceeds_without_media():
     finally:
         bot_module.VirtualPersonaBot._extract_tgs_frame = original
 
-    call_kwargs = bot_obj.orch.handle_message.call_args.kwargs
-    assert call_kwargs.get("media") is None
+    assert len(enqueued) == 1
+    assert enqueued[0][1]["media"] is None
 
 
 def test_extract_tgs_frame_returns_none_when_lottie_missing():
