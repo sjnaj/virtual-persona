@@ -61,6 +61,7 @@ system:
   memory_consolidation_hours: 6  # 每6小时整理记忆
   inner_state_interval_hours: [2, 3]   # 随机区间（小时）
   pending_thought_ttl_hours: 48        # pending_thoughts 默认过期时间
+  message_accumulation_ms: 500         # ms to wait for rapid follow-up messages before generating reply
 
 # ========== LLM 配置 ==========
 llm:
