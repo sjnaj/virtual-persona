@@ -27,12 +27,7 @@ def _build_user_content_line(user_message, proactive_context, media):
     return proactive_context
 
 
-_MBTI_DESCRIPTIONS = {
-    "ENFP": "热情开放、充满好奇心、喜欢分享、容易被新事物吸引",
-    "INFP": "理想主义、善解人意、内敛但情感深厚",
-    "ENFJ": "热情有感染力、善于倾听、天生领导者",
-    "INTJ": "独立理性、目标明确、不喜欢废话",
-}
+
 
 
 class ExpressionSynthesizer:
@@ -208,15 +203,14 @@ class ExpressionSynthesizer:
         # ---- 人设特质 ----
         interests_str = "、".join(self.persona.get("interests", []))
         mbti = self.persona.get("mbti", "")
-        mbti_desc = _MBTI_DESCRIPTIONS.get(mbti, "")
+       
         age = self.persona.get("age", "")
 
         trait_lines = []
         if age:
             trait_lines.append(f"年龄：{age}岁")
         if mbti:
-            desc_part = f"（{mbti_desc}）" if mbti_desc else ""
-            trait_lines.append(f"MBTI：{mbti}{desc_part}")
+            trait_lines.append(f"MBTI：{mbti}")
         if interests_str:
             trait_lines.append(f"兴趣：{interests_str}")
 
@@ -231,7 +225,7 @@ class ExpressionSynthesizer:
 {trait_section}
 ## 此刻状态
 时间：{now.strftime("%H:%M")}（{'工作日' if now.weekday() < 5 else '周末'}）
-正在做：{life_status['current_action']} @ {life_status['location']}
+正在做：{life_status['current_detail']} @ {life_status['location']}
 心情：{emotion_style['tone']}（valence={emotion_status['valence']:.1f}）
 体力：{life_status['physical']['energy']}/100
 {monologue_section}
@@ -260,7 +254,8 @@ class ExpressionSynthesizer:
 3. {'群聊中最多发1-2条，简短为主' if is_group else '可以分多条发'}
 4. {'群聊中@某人用「@名字」格式' if is_group else ''}
 5. 回复风格要匹配你和对方的关系亲密度
-6. 不要说"作为AI"或暴露非人身份
+6. 主动说的话不用回复最近的消息
+7. 不要说"作为AI"或暴露非人身份
 
 直接输出消息："""
 

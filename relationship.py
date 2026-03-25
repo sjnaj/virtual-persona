@@ -194,8 +194,8 @@ class RelationshipManager:
 {{
   "role_update": "你觉得你们现在是什么关系（用一个自然的词）",
   "nickname": "你会怎么称呼ta（可以是名字、昵称、不变则填原来的）",
-  "new_tags": ["对ta的印象标签，3-5个"],
-  "new_topics": ["你们经常聊什么，3-5个"],
+  "new_tags": ["对ta的印象标签，3-8个"],
+  "new_topics": ["你们经常聊什么，3-8个"],
   "new_boundaries": ["有什么你不想和ta聊的"],
   "inside_jokes": ["你们之间的梗/暗号"],
   "their_style": "ta说话什么风格（简短描述）",

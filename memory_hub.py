@@ -9,9 +9,58 @@ import logging
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict
 
-import vector_store as chromadb
+import vector_store as _vector_store
+
+try:
+    import chromadb as _chromadb
+    _HAS_CHROMADB = True
+except ImportError:
+    _HAS_CHROMADB = False
 
 logger = logging.getLogger(__name__)
+
+
+class _DoubaoEmbedFn:
+    """将 llm.embed_sync 包装成 chromadb EmbeddingFunction 接口。"""
+    def __init__(self, fn):
+        self._fn = fn
+
+    def name(self) -> str:
+        return "doubao-embedding"
+
+    def __call__(self, input):  # input: list[str] -> list[list[float]]
+        result = []
+        for text in input:
+            vec = self._fn(text)
+            if vec is None or len(vec) == 0:
+                raise RuntimeError("embed_sync returned no vector; cannot store to ChromaDB")
+            result.append(vec.tolist())
+        return result
+
+
+class _ChromaClientAdapter:
+    """让真实 chromadb 的 PersistentClient 接受 embed_fn 参数，
+    并自动把它作为 embedding_function 传给每个 collection。"""
+    def __init__(self, path: str, embed_fn=None):
+        self._client = _chromadb.PersistentClient(path=path)
+        self._ef = _DoubaoEmbedFn(embed_fn) if embed_fn else None
+
+    def get_or_create_collection(self, name: str, metadata: dict = None):
+        kwargs = {"name": name}
+        if metadata:
+            kwargs["metadata"] = metadata
+        if self._ef:
+            kwargs["embedding_function"] = self._ef
+        return self._client.get_or_create_collection(**kwargs)
+
+
+def _make_client(path: str, embed_fn=None):
+    if _HAS_CHROMADB:
+        logger.info("[Memory] 使用 ChromaDB 向量存储")
+        return _ChromaClientAdapter(path, embed_fn)
+    else:
+        logger.info("[Memory] ChromaDB 未安装，使用内置 SQLite 向量存储")
+        return _vector_store.PersistentClient(path=path, embed_fn=embed_fn)
 
 
 class MemoryHub:
@@ -21,7 +70,8 @@ class MemoryHub:
         self.llm = llm
         self.bus = event_bus
 
-        self.chroma = chromadb.PersistentClient(path=persist_dir)
+        embed_fn = getattr(llm, "embed_sync", None)
+        self.chroma = _make_client(persist_dir, embed_fn)
         self.episodic = self.chroma.get_or_create_collection(
             name="episodic", metadata={"hnsw:space": "cosine"}
         )
@@ -111,45 +161,54 @@ source_privacy说明：
             now_str = datetime.now().isoformat()
 
             for i, fact in enumerate(result.get("facts", [])):
-                self.semantic.add(
-                    documents=[fact["fact"]],
-                    metadatas=[{
-                        "confidence": fact.get("confidence", 0.7),
-                        "about_person": fact.get("about_person", ""),
-                        "source_privacy": fact.get("source_privacy", "private"),
-                        "source_chat_id": str(cid),
-                        "created": now_str,
-                        "type": "fact",
-                    }],
-                    ids=[f"fact_{cid}_{now_str}_{i}"],
-                )
+                try:
+                    self.semantic.add(
+                        documents=[fact["fact"]],
+                        metadatas=[{
+                            "confidence": fact.get("confidence", 0.7),
+                            "about_person": fact.get("about_person", ""),
+                            "source_privacy": fact.get("source_privacy", "private"),
+                            "source_chat_id": str(cid),
+                            "created": now_str,
+                            "type": "fact",
+                        }],
+                        ids=[f"fact_{cid}_{now_str}_{i}"],
+                    )
+                except Exception as e:
+                    logger.warning(f"[Memory] 存储 fact 失败 (embedding error?): {e}")
 
             for i, ep in enumerate(result.get("episodes", [])):
-                self.episodic.add(
-                    documents=[ep["summary"]],
-                    metadatas=[{
-                        "emotional_weight": ep.get("emotional_weight", 0.5),
-                        "people_involved": json.dumps(ep.get("people_involved", [])),
-                        "source_privacy": ep.get("source_privacy", "private"),
-                        "source_chat_id": str(cid),
-                        "created": now_str,
-                        "accuracy": 1.0,
-                        "type": "episode",
-                    }],
-                    ids=[f"episode_{cid}_{now_str}_{i}"],
-                )
+                try:
+                    self.episodic.add(
+                        documents=[ep["summary"]],
+                        metadatas=[{
+                            "emotional_weight": ep.get("emotional_weight", 0.5),
+                            "people_involved": json.dumps(ep.get("people_involved", [])),
+                            "source_privacy": ep.get("source_privacy", "private"),
+                            "source_chat_id": str(cid),
+                            "created": now_str,
+                            "accuracy": 1.0,
+                            "type": "episode",
+                        }],
+                        ids=[f"episode_{cid}_{now_str}_{i}"],
+                    )
+                except Exception as e:
+                    logger.warning(f"[Memory] 存储 episode 失败 (embedding error?): {e}")
 
             for i, em in enumerate(result.get("emotional_impressions", [])):
-                self.emotional.add(
-                    documents=[em["feeling"]],
-                    metadatas=[{
-                        "intensity": em.get("intensity", 0.5),
-                        "about_person": em.get("about_person", ""),
-                        "created": now_str,
-                        "type": "emotional",
-                    }],
-                    ids=[f"emotion_{cid}_{now_str}_{i}"],
-                )
+                try:
+                    self.emotional.add(
+                        documents=[em["feeling"]],
+                        metadatas=[{
+                            "intensity": em.get("intensity", 0.5),
+                            "about_person": em.get("about_person", ""),
+                            "created": now_str,
+                            "type": "emotional",
+                        }],
+                        ids=[f"emotion_{cid}_{now_str}_{i}"],
+                    )
+                except Exception as e:
+                    logger.warning(f"[Memory] 存储 emotional 失败 (embedding error?): {e}")
 
             self.buffers[cid].clear()
             logger.info(f"[Memory] 整合完成 chat_id={cid}")

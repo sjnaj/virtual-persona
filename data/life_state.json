@@ -1,7 +1,7 @@
 {
   "physical": {
     "energy": 73.0,
-    "hunger": 29.364086268701268,
+    "hunger": 27.817622608722655,
     "comfort": 70.0,
     "sleep_debt": 0
   },
@@ -12,7 +12,7 @@
   "woke_up_today": true,
   "daily_weather": {
     "condition": "晴",
-    "temp": 22,
+    "temp": 24,
     "date": "2026-03-22"
   },
   "yearago": {
@@ -42,5 +42,5 @@
       "shareable_thought": null
     }
   ],
-  "saved_at": "2026-03-22T15:46:53.179014"
+  "saved_at": "2026-03-25T15:17:26.725602"
 }

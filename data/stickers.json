@@ -1,15 +1,22 @@
 {
-    "stickers": [
-      {
-        "id": "stk_0000",
-        "file_id": "REPLACE_WITH_REAL_FILE_ID",
-        "type": "sticker",
-        "tags": ["开心", "笑", "可爱"],
-        "mood": "happy",
-        "scene": ["收到好消息", "打招呼"],
-        "usage_count": 0,
-        "added_date": "2025-01-01",
-        "description": "开心的小猫咪"
-      }
-    ]
+  "stickers": [
+    {
+      "id": "stk_0000",
+      "file_id": "REPLACE_WITH_REAL_FILE_ID",
+      "type": "sticker",
+      "tags": [
+        "开心",
+        "笑",
+        "可爱"
+      ],
+      "mood": "happy",
+      "scene": [
+        "收到好消息",
+        "打招呼"
+      ],
+      "usage_count": 15,
+      "added_date": "2025-01-01",
+      "description": "开心的小猫咪"
+    }
+  ]
 }

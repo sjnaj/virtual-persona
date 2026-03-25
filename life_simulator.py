@@ -130,7 +130,9 @@ class LifeSimulator:
         if blacklist:
             blacklist_text = f"\n最近这些行为已经出现太多次了，这轮请避免选择：{blacklist}"
 
-        recent_actions = [e.action for e in self.event_log[-6:]]
+        recent_actions = [e.action for e in self.event_log[-10:]]
+        recent_details = [e.detail for e in self.event_log[-10:]]
+
         weather_str = (
             f"{self.daily_weather['condition']} {self.daily_weather['temp']}°C"
             if self.daily_weather else "未知"
@@ -153,6 +155,7 @@ class LifeSimulator:
 - {yearago_str}{yearago_notable}
 
 最近几个动作：{recent_actions}
+最近几个细节：{recent_details}
 
 她的职业：{self.persona.get('occupation', '')}
 {"她的兴趣爱好：" + interests_str + chr(10) if interests_str else ""}她的性格：外向{self.persona['personality']['extraversion']:.1f} 自律{self.persona['personality']['conscientiousness']:.1f}
@@ -161,7 +164,7 @@ class LifeSimulator:
 要求：
 1. 大部分时候是平淡的日常，不要每次都有戏剧性事件
 2. 工作日白天应该在上班
-3. 考虑饥饿感（>60该吃饭了）、体力（<30会想休息）
+3. 考虑饥饿感（>60该吃饭了）、体力（<30会想休息）,买的饭记得吃了
 4. 偶尔可以有小事件（同事八卦、外卖好吃、猫做了什么等）{blacklist_text}
 这个时间段她比较可能做的事情有：{hints}，也可以有其他合理安排。
 
