@@ -120,8 +120,7 @@ def test_worker_regenerates_when_new_message_arrives_during_generation():
     assert bot_obj.orch._generate_reply.await_count == 2
     assert bot_obj.orch._record_reply.await_count == 1
 
-    recorded_msgs = bot_obj.orch._record_reply.call_args.kwargs.get("messages") or \
-                    bot_obj.orch._record_reply.call_args.args[0]
+    recorded_msgs = bot_obj.orch._record_reply.call_args.kwargs["messages"]
     assert recorded_msgs[0]["content"] == "reply_2"
 
 
@@ -154,8 +153,7 @@ def test_worker_sends_original_reply_when_regen_batch_all_group_skips():
     asyncio.run(run())
 
     assert bot_obj.orch._generate_reply.await_count == 1
-    recorded_msgs = bot_obj.orch._record_reply.call_args.kwargs.get("messages") or \
-                    bot_obj.orch._record_reply.call_args.args[0]
+    recorded_msgs = bot_obj.orch._record_reply.call_args.kwargs["messages"]
     assert recorded_msgs[0]["content"] == "original"
 
 

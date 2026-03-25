@@ -7,9 +7,6 @@ from unittest.mock import MagicMock, AsyncMock
 def _make_bot():
     from bot import VirtualPersonaBot
     orch = MagicMock()
-    orch.handle_message = AsyncMock(return_value=[
-        {"type": "text", "content": "好漂亮～", "delay": 0}
-    ])
     orch.ingest_message = AsyncMock(return_value="direct")
     orch._generate_reply = AsyncMock(return_value=[
         {"type": "text", "content": "好漂亮～", "delay": 0}

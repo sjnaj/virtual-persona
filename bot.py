@@ -202,8 +202,10 @@ class VirtualPersonaBot:
         except Exception as e:
             logger.error(f"[Worker:{chat_id}] unhandled error: {e}", exc_info=True)
         finally:
-            # Remove self from workers dict so next enqueue can start a fresh worker
+            # Clean up worker and queue entries
             self._chat_workers.pop(chat_id, None)
+            if chat_id in self._chat_queues and self._chat_queues[chat_id].empty():
+                self._chat_queues.pop(chat_id, None)
 
     async def _extract_first_frame(self, video_bytes: bytes) -> bytes | None:
         """Extract the first frame from an MP4/WebM file as JPEG bytes using ffmpeg.
