@@ -166,4 +166,4 @@ def test_handle_message_backward_compat():
     # expression was called once
     orch.expression.compose_reply.assert_called_once()
     # reply was recorded
-    orch.memory.add_message.call_count >= 1
+    assert orch.memory.add_message.call_count >= 1
