@@ -83,6 +83,111 @@ class Orchestrator:
     def set_proactive_callback(self, chat_id: int, callback: Callable):
         self.proactive_callbacks[chat_id] = callback
 
+    async def ingest_message(
+        self,
+        text: str,
+        user_id: int,
+        user_name: str,
+        chat_id: int,
+        chat_type: str = "private",
+        group_title: str = "",
+        mentioned_me: bool = False,
+        media: list = None,
+    ) -> Optional[str]:
+        """
+        Update all state for an incoming message WITHOUT generating a reply.
+        Returns reply_mode string, or None if a group chat decided not to reply.
+        """
+        # 1. Update relationship
+        self.relationships.get_or_create(user_id, user_name)
+
+        # 2. Update chat context
+        window = self.chat_ctx.get_or_create(chat_id, chat_type, group_title)
+        _media_label = ""
+        if media:
+            for m in media:
+                if m.get("label") == "photo":
+                    _media_label += " [图片]"
+                elif m.get("label") == "sticker":
+                    _media_label += " [表情包]"
+        _stored_text = text + _media_label
+        self.chat_ctx.add_message(
+            chat_id, user_id, user_name, _stored_text,
+            is_me=False, mentioned_me=mentioned_me,
+        )
+
+        # 3. Add to memory buffer
+        self.memory.add_message(
+            chat_id, "user", _stored_text,
+            user_id=user_id, user_name=user_name,
+            context_type="group" if chat_type in ("group", "supergroup") else "private",
+        )
+
+        # 4. Notify emotion system
+        await self.bus.emit("user.message", {"text": text, "user_id": user_id})
+        self.proactive.update_last_message_time(datetime.now())
+
+        # 5. Group behavior decision
+        reply_mode = "direct"
+        if chat_type in ("group", "supergroup"):
+            decision = await self.group_behavior.should_respond(
+                chat_window=window,
+                sender_id=user_id,
+                message_text=text,
+                mentioned_me=mentioned_me,
+                emotion_state=self.emotion.get_status(),
+            )
+            if not decision["should_reply"]:
+                logger.debug(f"[Orchestrator] 群聊中选择不回复 (prob={decision['probability']})")
+                return None
+            reply_mode = decision["reply_mode"]
+
+        return reply_mode
+
+    async def _generate_reply(
+        self,
+        user_message: str,
+        user_id: int,
+        chat_id: int,
+        chat_type: str,
+        reply_mode: str,
+        media: list = None,
+    ) -> list:
+        """Generate a reply via the expression layer. Does NOT record it."""
+        return await self.expression.compose_reply(
+            user_message=user_message,
+            user_id=user_id,
+            chat_id=chat_id,
+            chat_type=chat_type,
+            reply_mode=reply_mode,
+            media=media,
+        )
+
+    async def _record_reply(
+        self,
+        messages: list,
+        user_id: int,
+        chat_id: int,
+        chat_type: str,
+    ) -> None:
+        """Record the bot's reply into memory/context and update relationship."""
+        context_type = "group" if chat_type in ("group", "supergroup") else "private"
+        recent_convo = self.chat_ctx.get_recent_context(chat_id, limit=20)
+
+        for msg in messages:
+            if msg["type"] == "text":
+                self.memory.add_message(
+                    chat_id, "assistant", msg["content"],
+                    context_type=context_type,
+                )
+                self.chat_ctx.add_message(
+                    chat_id, 0, self.persona["name"],
+                    msg["content"], is_me=True,
+                )
+
+        sentiment = 0.1
+        await self.relationships.update_after_conversation(user_id, recent_convo, sentiment)
+
     async def handle_message(
         self,
         text: str,
@@ -98,79 +203,22 @@ class Orchestrator:
         处理任意来源的消息。
         返回消息列表 或 None（群聊中决定不回复时）。
         """
-        # 1. 更新关系档案
-        rel_prof = self.relationships.get_or_create(user_id, user_name)
-
-        # 2. 更新聊天窗口
-        window = self.chat_ctx.get_or_create(chat_id, chat_type, group_title)
-        _media_label = ""
-        if media:
-            for m in media:
-                if m.get("label") == "photo":
-                    _media_label += " [图片]"
-                elif m.get("label") == "sticker":
-                    _media_label += " [表情包]"
-        _stored_text = text + _media_label
-
-        self.chat_ctx.add_message(
-            chat_id, user_id, user_name, _stored_text,
-            is_me=False, mentioned_me=mentioned_me,
+        reply_mode = await self.ingest_message(
+            text=text, user_id=user_id, user_name=user_name,
+            chat_id=chat_id, chat_type=chat_type, group_title=group_title,
+            mentioned_me=mentioned_me, media=media,
         )
+        if reply_mode is None:
+            return None
 
-        # 3. 记入记忆缓冲
-        self.memory.add_message(
-            chat_id, "user", _stored_text,
-            user_id=user_id, user_name=user_name,
-            context_type="group" if chat_type in ("group", "supergroup") else "private",
+        messages = await self._generate_reply(
+            user_message=text, user_id=user_id, chat_id=chat_id,
+            chat_type=chat_type, reply_mode=reply_mode, media=media,
         )
-
-        # 4. 通知情绪系统
-        await self.bus.emit("user.message", {"text": text, "user_id": user_id})
-        self.proactive.update_last_message_time(datetime.now())
-
-        # 5. 群聊行为决策
-        reply_mode = "direct"
-        if chat_type in ("group", "supergroup"):
-            decision = await self.group_behavior.should_respond(
-                chat_window=window,
-                sender_id=user_id,
-                message_text=text,
-                mentioned_me=mentioned_me,
-                emotion_state=self.emotion.get_status(),
-            )
-            if not decision["should_reply"]:
-                logger.debug(f"[Orchestrator] 群聊中选择不回复 (prob={decision['probability']})")
-                return None
-            reply_mode = decision["reply_mode"]
-
-        # 6. 生成回复
-        messages = await self.expression.compose_reply(
-            user_message=text,
-            user_id=user_id,
-            chat_id=chat_id,
-            chat_type=chat_type,
-            reply_mode=reply_mode,
-            media=media,
+        await self._record_reply(
+            messages=messages, user_id=user_id,
+            chat_id=chat_id, chat_type=chat_type,
         )
-
-        # 7. 记录自己的回复
-        for msg in messages:
-            if msg["type"] == "text":
-                self.memory.add_message(
-                    chat_id, "assistant", msg["content"],
-                    context_type="group" if chat_type in ("group", "supergroup") else "private",
-                )
-                self.chat_ctx.add_message(
-                    chat_id, 0, self.persona["name"],
-                    msg["content"], is_me=True,
-                )
-
-        # 8. 更新关系
-        # 简单情感分析（后续可以用更精细的）
-        sentiment = 0.1  # 默认微正
-        recent_convo = self.chat_ctx.get_recent_context(chat_id, limit=20)
-        await self.relationships.update_after_conversation(user_id, recent_convo, sentiment)
-
         return messages
 
     async def handle_proactive_trigger(self):
